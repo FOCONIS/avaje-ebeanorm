@@ -35,13 +35,18 @@ public class TestLazyForeignKeys extends BaseTestCase {
     MainEntity e2 = new MainEntity();
     e2.setId("ent2");
 
+    EntityA entityA = new EntityA();
+    entityA.setId("entA");
+    
     rel1.setEntity1(e1);
     rel1.setEntity2(e2);
+    rel1.setParentEntity(entityA);
     DB.save(rel1);
   }
 
   @After
   public void cleanup() {
+    DB.find(ParentEntity.class).delete();
     DB.find(MainEntity.class).delete();
     DB.find(MainEntityRelation.class).delete();
   }
@@ -93,5 +98,24 @@ public class TestLazyForeignKeys extends BaseTestCase {
     assertEquals("attr1", rel1.getEntity1().getAttr1());
     assertFalse(rel1.getEntity1().isDeleted());
     assertTrue(rel1.getEntity2().isDeleted());
+  }
+  
+  @Test
+  @IgnorePlatform(Platform.SQLSERVER17)
+  public void testFindOneInheritance() throws Exception {
+    PathProperties pathProp = new PathProperties();
+    pathProp.addToPath(null, "attr1");
+    pathProp.addToPath("parentEntity", "id");
+    
+    Query<MainEntityRelation> query = Ebean.find(MainEntityRelation.class).apply(pathProp);
+    List<MainEntityRelation> list = query.findList();
+    assertEquals(1, list.size());
+    
+    assertThat(query.getGeneratedSql()).contains("t0.id, t0.attr1, t0.parent_id, t1.kind, t1.id");
+    
+    MainEntityRelation rel1 = list.get(0);
+    assertEquals("attr1", rel1.getEntity1().getAttr1());
+    assertEquals("entA", rel1.getParentEntity().getId());
+    assertTrue(rel1.getParentEntity().isDeleted());
   }
 }

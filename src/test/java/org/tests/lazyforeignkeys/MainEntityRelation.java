@@ -27,6 +27,11 @@ public class MainEntityRelation {
   @DbForeignKey(noConstraint = true)
   private MainEntity entity2;
 
+  @ManyToOne
+  @JoinColumn(name = "parent_id")
+  @DbForeignKey(noConstraint = true)
+  private ParentEntity parentEntity;
+  
   private String attr1;
 
   public MainEntity getEntity1() {
@@ -45,6 +50,14 @@ public class MainEntityRelation {
     this.entity2 = entity2;
   }
 
+  public ParentEntity getParentEntity() {
+    return parentEntity;
+  }
+  
+  public void setParentEntity(ParentEntity parentEntity) {
+    this.parentEntity = parentEntity;
+  }
+  
   public String getAttr1() {
     return attr1;
   }
