@@ -8,6 +8,8 @@ import org.junit.Test;
 import java.util.List;
 import java.util.UUID;
 
+import javax.persistence.PersistenceException;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestDistinct extends BaseTestCase {
@@ -50,8 +52,9 @@ public class TestDistinct extends BaseTestCase {
   }
   
   /**
-   * Generated query with a distinct and a sort on a column calculated with a {@link Formula} causes an exception on Sql Server.
+   * Generated query with a distinct and a sort on a column calculated with a {@link Formula} runs successfully and doesn't throw {@link PersistenceException}.
    */
+  // on Sql server test throws: javax.persistence.PersistenceException: Query threw SQLException:ORDER BY items must appear in the select list if SELECT DISTINCT is specified
   @Test
   public void testOrderByFormula() {
     List<Contract> contracts = Ebean.find(Contract.class).where().in("aclEntries.aclEntry.id", "xx").orderBy().asc("furmulated").findList();
