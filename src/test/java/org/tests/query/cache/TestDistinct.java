@@ -48,6 +48,14 @@ public class TestDistinct extends BaseTestCase {
     List<ContractCosts> costs = costsQuery(acl.getId(), acl2.getId()).findList();
     assertThat(costs).hasSize(1);
   }
+  
+  /**
+   * Generated query with a distinct and a sort on a column calculated with a {@link Formula} causes an exception on Sql Server.
+   */
+  @Test
+  public void testOrderByFormula() {
+    List<Contract> contracts = Ebean.find(Contract.class).where().in("aclEntries.aclEntry.id", "xx").orderBy().asc("furmulated").findList();
+  }
 
   public ExpressionList<Position> positionsQuery(final Long aclId) {
     return Ebean.find(Position.class).where().eq("contract.aclEntries.aclEntry.id", aclId);

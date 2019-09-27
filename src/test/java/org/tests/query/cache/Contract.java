@@ -1,5 +1,8 @@
 package org.tests.query.cache;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -7,8 +10,8 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
-import java.util.ArrayList;
-import java.util.List;
+
+import io.ebean.annotation.Formula;
 
 @Entity
 public class Contract {
@@ -17,6 +20,9 @@ public class Contract {
 	protected Long id;
 
 	private String name;
+	
+	@Formula(select="(SELECT 'irrelevant' from contract ct where ct.id = ${ta}.id)")
+    private String furmulated;
 
 	@OneToMany(cascade = CascadeType.ALL, mappedBy = "contract")
 	private List<Position> positions;
