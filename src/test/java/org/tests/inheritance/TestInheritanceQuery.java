@@ -31,6 +31,7 @@ public class TestInheritanceQuery extends BaseTestCase {
     query.where().in("val", 90, 91); // restrict to a & b1
 
     assertThat(query.findList()).hasSize(2); // a & b1
+    assertThat(query.setMaxRows(1).findList()).hasSize(1);
 
     LoggedSqlCollector.start();
     Query<Parent> query2 = query.copy();
