@@ -28,6 +28,7 @@ public class MySqlPlatform extends DatabasePlatform {
     this.useExtraTransactionOnIterateSecondaryQueries = true;
     this.selectCountWithAlias = true;
     this.supportsSavepointId = false;
+    this.inlineSqlUpdateLimit = true;
     this.dbEncrypt = new MySqlDbEncrypt();
     this.historySupport = new MySqlHistorySupport();
     this.columnAliasPrefix = null;
@@ -51,8 +52,8 @@ public class MySqlPlatform extends DatabasePlatform {
     this.openQuote = "`";
     this.closeQuote = "`";
     // use pipe for escaping as it depends if mysql runs in no_backslash_escapes or not.
-    this.likeClauseRaw = "like ? escape ''";
-    this.likeClauseEscaped = "like ? escape '|'";
+    this.likeClauseRaw = "like ? escape''";
+    this.likeClauseEscaped = "like ? escape'|'";
 
     this.forwardOnlyHintOnFindIterate = true;
     this.booleanDbType = Types.BIT;

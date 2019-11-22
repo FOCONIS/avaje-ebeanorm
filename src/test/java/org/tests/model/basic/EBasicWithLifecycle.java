@@ -1,5 +1,6 @@
 package org.tests.model.basic;
 
+import io.ebean.Model;
 import io.ebean.annotation.PostSoftDelete;
 import io.ebean.annotation.PreSoftDelete;
 import io.ebean.annotation.SoftDelete;
@@ -19,7 +20,7 @@ import javax.persistence.Version;
 
 @Entity
 @Table(name = "e_basic_withlife")
-public class EBasicWithLifecycle {
+public class EBasicWithLifecycle extends Model {
 
   @Id
   Long id;
@@ -31,6 +32,8 @@ public class EBasicWithLifecycle {
 
   @Version
   Long version;
+
+  String other;
 
   transient StringBuilder buffer = new StringBuilder();
 
@@ -57,6 +60,7 @@ public class EBasicWithLifecycle {
   @PreUpdate
   public void preUpdate1() {
     buffer.append("preUpdate1");
+    other += "preUpdate1";
   }
 
   @PreUpdate
@@ -138,6 +142,14 @@ public class EBasicWithLifecycle {
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  public String getOther() {
+    return other;
+  }
+
+  public void setOther(String other) {
+    this.other = other;
   }
 
   public boolean isDeleted() {
