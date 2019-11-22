@@ -31,11 +31,6 @@ public interface Persister {
   void update(EntityBean entityBean, Transaction t);
 
   /**
-   * Update the bean specifying deleteMissingChildren.
-   */
-  void update(EntityBean entityBean, Transaction t, boolean deleteMissingChildren);
-
-  /**
    * Force an Insert using the given bean.
    */
   void insert(EntityBean entityBean, Transaction t);
@@ -109,8 +104,18 @@ public interface Persister {
   void executeOrQueue(SpiSqlUpdate update, SpiTransaction t, boolean queue);
 
   /**
-   * Add the statement to JDBC batch for later execution via executeBatch.
+   * Queue the SqlUpdate for early execution (with JDBC batch).
    */
+  void addToFlushQueue(SpiSqlUpdate update, SpiTransaction t);
+
+  /**
+   * Queue the SqlUpdate for late execution (with JDBC batch).
+   */
+  void addToFlushQueueLast(SpiSqlUpdate update, SpiTransaction t);
+
+    /**
+     * Add the statement to JDBC batch for later execution via executeBatch.
+     */
   void addBatch(SpiSqlUpdate sqlUpdate, SpiTransaction transaction);
 
   /**

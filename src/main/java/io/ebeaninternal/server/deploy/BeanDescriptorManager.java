@@ -145,8 +145,6 @@ public class BeanDescriptorManager implements BeanDescriptorMap {
 
   private int entityBeanCount;
 
-  private final boolean updateChangesOnly;
-
   private final BootupClasses bootupClasses;
 
   private final String serverName;
@@ -230,11 +228,7 @@ public class BeanDescriptorManager implements BeanDescriptorMap {
     this.deplyInherit = config.getDeployInherit();
     this.deployUtil = config.getDeployUtil();
     this.typeManager = deployUtil.getTypeManager();
-
     this.beanManagerFactory = new BeanManagerFactory(config.getDatabasePlatform());
-
-    this.updateChangesOnly = serverConfig.isUpdateChangesOnly();
-
     this.beanLifecycleAdapterFactory = new BeanLifecycleAdapterFactory(serverConfig);
     this.persistControllerManager = new PersistControllerManager(bootupClasses);
     this.postLoadManager = new PostLoadManager(bootupClasses);
@@ -1393,9 +1387,6 @@ public class BeanDescriptorManager implements BeanDescriptorMap {
   private <T> DeployBeanInfo<T> createDeployBeanInfo(Class<T> beanClass) {
 
     DeployBeanDescriptor<T> desc = new DeployBeanDescriptor<>(this, beanClass, serverConfig);
-
-    desc.setUpdateChangesOnly(updateChangesOnly);
-
     beanLifecycleAdapterFactory.addLifecycleMethods(desc);
 
     // set bean controller, finder and listener

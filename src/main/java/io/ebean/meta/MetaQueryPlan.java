@@ -2,6 +2,9 @@ package io.ebean.meta;
 
 import io.ebean.ProfileLocation;
 
+/**
+ * Meta data for captured query plan.
+ */
 public interface MetaQueryPlan {
 
   /**
@@ -25,9 +28,9 @@ public interface MetaQueryPlan {
   String getSql();
 
   /**
-   * Return the hash of the sql.
+   * Return the hash of the plan.
    */
-  String getSqlHash();
+  String getHash();
 
   /**
    * Return a description of the bind values.
