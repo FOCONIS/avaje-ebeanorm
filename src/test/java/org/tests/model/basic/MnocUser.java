@@ -1,6 +1,5 @@
 package org.tests.model.basic;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.ManyToMany;
@@ -21,13 +20,9 @@ public class MnocUser {
   Integer version;
 
   // No cascade REMOVE
-  @ManyToMany(cascade = CascadeType.PERSIST)
+  @ManyToMany
   @OrderBy("roleName")
   List<MnocRole> validRoles;
-
-  public MnocUser() {
-
-  }
 
   public MnocUser(String userName) {
     this.userName = userName;

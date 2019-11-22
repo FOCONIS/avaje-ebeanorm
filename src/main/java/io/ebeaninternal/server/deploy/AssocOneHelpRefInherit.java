@@ -21,9 +21,7 @@ class AssocOneHelpRefInherit extends AssocOneHelp {
   @Override
   void loadIgnore(DbReadContext ctx) {
     property.targetIdBinder.loadIgnore(ctx);
-    if (inherit.hasChildren()) {
-      ctx.getDataReader().incrementPos(1);
-    }
+    ctx.getDataReader().incrementPos(1);
   }
 
   /**
@@ -57,14 +55,13 @@ class AssocOneHelpRefInherit extends AssocOneHelp {
     boolean disableLazyLoading = ctx.isDisableLazyLoading();
     Object ref = desc.contextRef(pc, ctx.isReadOnly(), disableLazyLoading, id);
     if (!disableLazyLoading) {
-      ctx.register(property.name, ((EntityBean) ref)._ebean_getIntercept());
+      ctx.registerBeanInherit(property, ((EntityBean) ref)._ebean_getIntercept());
     }
     return ref;
   }
 
   @Override
   void appendFrom(DbSqlContext ctx, SqlJoinType joinType) {
-
     // add join to support the discriminator column
     String relativePrefix = ctx.getRelativePrefix(property.name);
     property.tableJoin.addJoin(joinType, relativePrefix, ctx);
@@ -76,7 +73,7 @@ class AssocOneHelpRefInherit extends AssocOneHelp {
   @Override
   void appendSelect(DbSqlContext ctx, boolean subQuery) {
 
-    if (!subQuery && inherit.hasChildren()) {
+    if (!subQuery) {
       // add discriminator column
       String relativePrefix = ctx.getRelativePrefix(property.getName());
       String tableAlias = ctx.getTableAlias(relativePrefix);

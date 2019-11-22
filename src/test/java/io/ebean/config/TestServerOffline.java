@@ -21,7 +21,7 @@ import javax.persistence.PersistenceException;
 import javax.sql.DataSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.StrictAssertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class TestServerOffline {
 

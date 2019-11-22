@@ -1,6 +1,5 @@
 package io.ebeaninternal.server.query;
 
-import io.ebean.ProfileLocation;
 import io.ebean.bean.ObjectGraphNode;
 import io.ebean.meta.MetaOrmQueryMetric;
 import io.ebean.meta.MetaOrmQueryOrigin;
@@ -193,11 +192,6 @@ public final class CQueryPlanStats {
     }
 
     @Override
-    public ProfileLocation getProfileLocation() {
-      return queryPlan.getProfileLocation();
-    }
-
-    @Override
     public long getBeanCount() {
       return metrics.getBeanCount();
     }
@@ -238,8 +232,8 @@ public final class CQueryPlanStats {
     }
 
     @Override
-    public String getSqlHash() {
-      return queryPlan.getSqlHash();
+    public String getHash() {
+      return queryPlan.getHash();
     }
 
     @Override

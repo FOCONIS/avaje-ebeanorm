@@ -106,7 +106,7 @@ public class SimpleExpression extends AbstractValueExpression {
         return;
       }
       if (prop.isDbEncrypted()) {
-        String dsql = prop.getBeanProperty().getDecryptSql();
+        String dsql = prop.getBeanProperty().getDecryptProperty(propName);
         request.append(dsql).append(type.bind());
         return;
       }

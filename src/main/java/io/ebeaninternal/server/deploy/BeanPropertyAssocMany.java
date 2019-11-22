@@ -15,6 +15,7 @@ import io.ebean.text.PathProperties;
 import io.ebeaninternal.api.SpiEbeanServer;
 import io.ebeaninternal.api.SpiExpressionRequest;
 import io.ebeaninternal.api.SpiQuery;
+import io.ebeaninternal.api.SpiSqlUpdate;
 import io.ebeaninternal.api.filter.Expression3VL;
 import io.ebeaninternal.api.filter.ExpressionTest;
 import io.ebeaninternal.api.filter.FilterContext;
@@ -53,6 +54,7 @@ public class BeanPropertyAssocMany<T> extends BeanPropertyAssoc<T> implements ST
   private final TableJoin intersectionJoin;
   private final String intersectionPublishTable;
   private final String intersectionDraftTable;
+  private final boolean orphanRemoval;
 
   private IntersectionTable intersectionTable;
 
@@ -127,6 +129,7 @@ public class BeanPropertyAssocMany<T> extends BeanPropertyAssoc<T> implements ST
   public BeanPropertyAssocMany(BeanDescriptor<?> descriptor, DeployBeanPropertyAssocMany<T> deploy) {
     super(descriptor, deploy);
     this.unidirectional = deploy.isUnidirectional();
+    this.orphanRemoval = deploy.isOrphanRemoval();
     this.o2mJoinTable = deploy.isO2mJoinTable();
     this.hasOrderColumn = deploy.hasOrderColumn();
     this.manyToMany = deploy.isManyToMany();
@@ -320,7 +323,7 @@ public class BeanPropertyAssocMany<T> extends BeanPropertyAssoc<T> implements ST
     // do not add to the selectChain at the top level of the Many bean
   }
 
-  public SqlUpdate deleteByParentId(Object parentId, List<Object> parentIdist) {
+  public SpiSqlUpdate deleteByParentId(Object parentId, List<Object> parentIdist) {
     if (parentId != null) {
       return sqlHelp.deleteByParentId(parentId);
     } else {
@@ -512,6 +515,10 @@ public class BeanPropertyAssocMany<T> extends BeanPropertyAssoc<T> implements ST
 
   public boolean hasOrderColumn() {
     return hasOrderColumn;
+  }
+
+  public boolean isOrphanRemoval() {
+    return orphanRemoval;
   }
 
   @Override
@@ -957,10 +964,14 @@ public class BeanPropertyAssocMany<T> extends BeanPropertyAssoc<T> implements ST
   }
 
   public boolean isIncludeCascadeDelete() {
-    return cascadeInfo.isDelete() || o2mJoinTable || ModifyListenMode.REMOVALS == modifyListenMode;
+    return cascadeInfo.isDelete() || hasJoinTable() || ModifyListenMode.REMOVALS == modifyListenMode;
   }
 
-  public String insertElementCollection() {
+  boolean isCascadeDeleteEscalate() {
+    return !elementCollection && cascadeInfo.isDelete();
+  }
+
+  public SpiSqlUpdate insertElementCollection() {
     return sqlHelp.insertElementCollection();
   }
 
@@ -969,7 +980,11 @@ public class BeanPropertyAssocMany<T> extends BeanPropertyAssoc<T> implements ST
   }
 
   void jsonWriteMapEntry(SpiJsonWriter ctx, Map.Entry<?, ?> entry) throws IOException {
-    elementDescriptor.jsonWriteMapEntry(ctx, entry);
+    if (elementDescriptor != null) {
+      elementDescriptor.jsonWriteMapEntry(ctx, entry);
+    } else {
+      targetDescriptor.jsonWrite(ctx, (EntityBean)entry.getValue());
+    }
   }
 
   void jsonWriteElementValue(SpiJsonWriter ctx, Object element) {
@@ -1049,10 +1064,9 @@ public class BeanPropertyAssocMany<T> extends BeanPropertyAssoc<T> implements ST
    */
   public Object jsonReadCollection(SpiJsonReader readJson, EntityBean parentBean) throws IOException {
 
-    if (elementDescriptor != null && manyType.isMap()) {
+    if (elementDescriptor != null && elementDescriptor.isJsonReadCollection()) {
       return elementDescriptor.jsonReadCollection(readJson, parentBean);
     }
-
     BeanCollection<?> collection = createEmpty(parentBean);
     BeanCollectionAdd add = getBeanCollectionAdd(collection);
     int i=0;

@@ -3,21 +3,21 @@
 
   <parent>
     <groupId>org.avaje</groupId>
-    <artifactId>java8-parent</artifactId>
-    <version>1.3</version>
+    <artifactId>java8-oss</artifactId>
+    <version>2.1</version>
   </parent>
 
   <groupId>io.ebean</groupId>
   <artifactId>ebean</artifactId>
-  <version>11.45.2-FOC4-SNAPSHOT</version>
+  <version>12.1.4-FOC1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>ebean</name>
   <url>http://ebean-orm.github.io/</url>
 
   <properties>
-    <jackson-core.version>2.9.9</jackson-core.version>
-    <jackson-databind.version>2.9.9.2</jackson-databind.version>
+    <jackson-core.version>2.10.0</jackson-core.version>
+    <jackson-databind.version>2.10.0</jackson-databind.version>
     <snakeyaml.version>1.21</snakeyaml.version>
     <agent.version>11.45.2-FOC1</agent.version>
   </properties>
@@ -119,7 +119,7 @@
     <dependency>
       <groupId>io.ebean</groupId>
       <artifactId>ebean-annotation</artifactId>
-      <version>5.1</version>
+      <version>6.1</version>
     </dependency>
 
     <dependency>
@@ -135,15 +135,9 @@
     </dependency>
 
     <dependency>
-      <groupId>org.avaje</groupId>
-      <artifactId>avaje-classpath-scanner</artifactId>
-      <version>3.1.1</version>
-    </dependency>
-
-    <dependency>
       <groupId>io.ebean</groupId>
       <artifactId>ebean-migration</artifactId>
-      <version>11.20.1</version>
+      <version>12.1.1</version>
     </dependency>
 
     <dependency>
@@ -200,7 +194,7 @@
     <dependency>
       <groupId>org.glassfish.jaxb</groupId>
       <artifactId>jaxb-runtime</artifactId>
-      <version>2.4.0-b180830.0438</version>
+      <version>2.3.2</version>
       <scope>provided</scope>
     </dependency>
 
@@ -309,10 +303,9 @@
 
     <dependency>
       <groupId>org.avaje.composite</groupId>
-      <artifactId>avaje-composite-testing</artifactId>
+      <artifactId>junit</artifactId>
       <version>1.1</version>
       <scope>test</scope>
-      <type>pom</type>
     </dependency>
 
     <dependency>
@@ -360,7 +353,7 @@
             <id>test</id>
             <phase>process-test-classes</phase>
             <configuration>
-              <transformArgs>debug=1</transformArgs>
+              <transformArgs>debug=0</transformArgs>
             </configuration>
             <goals>
               <goal>testEnhance</goal>
@@ -412,9 +405,9 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <version>2.9.1</version>
+        <version>3.1.1</version>
         <configuration>
-          <doctitle>Ebean 11</doctitle>
+          <doctitle>Ebean 12</doctitle>
           <overview>src/main/java/io/ebean/overview.html</overview>
           <source>1.8</source>
           <doclet>org.avaje.doclet.PygmentsDoclet</doclet>
@@ -424,6 +417,8 @@
             <artifactId>pygments-doclet</artifactId>
             <version>1.0.0</version>
           </docletArtifact>
+          <!-- for people using JDK11, our javadoc doclet isn't 11 compatible yet -->
+          <javadocExecutable>${env.JAVA8_HOME}/bin/javadoc</javadocExecutable>
           <additionalparam>
             -Xdoclint:none
             -include-basedir ${project.basedir}
