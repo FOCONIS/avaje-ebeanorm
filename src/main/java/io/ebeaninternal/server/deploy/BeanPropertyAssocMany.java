@@ -1117,4 +1117,16 @@ public class BeanPropertyAssocMany<T> extends BeanPropertyAssoc<T> implements ST
       return test.test(value);
     }
   }
+
+  /**
+   * Returns true, if we must create a m2m join table.
+   */
+  public boolean createJoinTable() {
+    if (hasJoinTable() && getMappedBy() == null) {
+      // only create on other 'owning' side
+      return !descriptor.isTableManaged(intersectionJoin.getTable());
+    } else {
+      return false;
+    }
+  }
 }
