@@ -2,6 +2,7 @@ package io.ebean;
 
 import io.ebean.annotation.PersistBatch;
 import io.ebean.annotation.Platform;
+import io.ebean.cache.ServerCacheStatistics;
 import io.ebean.config.dbplatform.IdType;
 import io.ebean.meta.MetaTimedMetric;
 import io.ebean.meta.MetricType;
@@ -76,6 +77,10 @@ public abstract class BaseTestCase {
     }
   }
 
+  protected void clearAllL2Cache() {
+    server().getServerCacheManager().clearAll();
+  }
+
   protected void resetAllMetrics() {
     server().getMetaInfoManager().resetAllMetrics();
   }
@@ -112,6 +117,10 @@ public abstract class BaseTestCase {
    */
   protected String sqlOf(Query<?> query, int columns) {
     return trimSql(query.getGeneratedSql(), columns);
+  }
+
+  protected void assertSqlBind(String sql) {
+    assertThat(sql).contains("-- bind");
   }
 
   protected void assertSqlBind(List<String> sql, int i) {
@@ -215,6 +224,10 @@ public abstract class BaseTestCase {
 
   protected <T> BeanDescriptor<T> getBeanDescriptor(Class<T> cls) {
     return spiEbeanServer().getBeanDescriptor(cls);
+  }
+
+  protected <T> ServerCacheStatistics getBeanCacheStats(Class<T> cls, boolean reset) {
+    return server().getServerCacheManager().getBeanCache(cls).getStatistics(reset);
   }
 
   protected Platform platform() {
