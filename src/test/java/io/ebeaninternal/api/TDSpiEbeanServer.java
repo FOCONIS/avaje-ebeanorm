@@ -66,6 +66,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 
 /**
@@ -660,6 +661,16 @@ public class TDSpiEbeanServer implements SpiEbeanServer {
   }
 
   @Override
+  public <T> Stream<T> findStream(Query<T> query, Transaction transaction) {
+    return null;
+  }
+
+  @Override
+  public <T> Stream<T> findLargeStream(Query<T> query, Transaction transaction) {
+    return null;
+  }
+
+  @Override
   public <T> void findEach(Query<T> query, Consumer<T> consumer, Transaction transaction) {
   }
 
@@ -807,10 +818,6 @@ public class TDSpiEbeanServer implements SpiEbeanServer {
 
   @Override
   public void update(Object bean, Transaction t) throws OptimisticLockException {
-  }
-
-  @Override
-  public void update(Object bean, Transaction transaction, boolean deleteMissingChildren) throws OptimisticLockException {
   }
 
   @Override
