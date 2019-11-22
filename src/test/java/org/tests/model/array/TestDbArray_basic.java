@@ -4,6 +4,7 @@ import io.ebean.BaseTestCase;
 import io.ebean.Ebean;
 import io.ebean.Query;
 import io.ebean.SqlRow;
+import io.ebean.annotation.ForPlatform;
 import io.ebean.annotation.IgnorePlatform;
 import io.ebean.annotation.Platform;
 import org.ebeantest.LoggedSqlCollector;
@@ -31,6 +32,7 @@ public class TestDbArray_basic extends BaseTestCase {
   public void insert() throws SQLException {
 
     bean.setName("some stuff");
+    assertThat(bean.getStatuses()).as("DbArray is auto initialised").isNotNull();
 
     List<String> phNumbers = bean.getPhoneNumbers();
     phNumbers.add("4321");
@@ -192,6 +194,10 @@ public class TestDbArray_basic extends BaseTestCase {
     Ebean.deleteAll(all);
   }
 
+  /**
+   * Platforms without Array support use JSON which by default isn't including null values.
+   */
+  @ForPlatform({Platform.H2, Platform.POSTGRES})
   @Test
   public void nullItems() {
     EArrayBean bean = new EArrayBean();

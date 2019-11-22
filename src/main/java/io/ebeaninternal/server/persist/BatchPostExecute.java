@@ -11,6 +11,12 @@ package io.ebeaninternal.server.persist;
 public interface BatchPostExecute {
 
   /**
+   * Return true if this is a queued sql update for element collection or intersection table.
+   * In this case we can executeBatch on the PreparedStatement.
+   */
+  boolean isFlushQueue();
+
+  /**
    * Check that the rowCount is correct for this execute. This is for
    * performing concurrency checking in batch execution.
    */
@@ -34,4 +40,9 @@ public interface BatchPostExecute {
    * Add as event to the profiling.
    */
   void profile(long offset, int batchSize);
+
+  /**
+   * Add timing metrics for batch persist.
+   */
+  void addTimingBatch(long startNanos, int batch);
 }

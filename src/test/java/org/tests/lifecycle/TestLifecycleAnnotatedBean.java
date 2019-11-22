@@ -1,6 +1,7 @@
 package org.tests.lifecycle;
 
 import io.ebean.BaseTestCase;
+import io.ebean.DB;
 import io.ebean.Ebean;
 import io.ebeaninternal.api.SpiEbeanServer;
 import io.ebeaninternal.server.deploy.BeanDescriptor;
@@ -97,6 +98,23 @@ public class TestLifecycleAnnotatedBean extends BaseTestCase {
 
     assertThat(bean.getBuffer()).contains("preUpdate1");
     assertThat(bean.getBuffer()).contains("preUpdate2");
+  }
+
+  @Test
+  public void shouldExecutePreUpdateMethod_via_modelUpdate() {
+
+    EBasicWithLifecycle bean = new EBasicWithLifecycle();
+    bean.setName("before");
+    bean.save();
+    assertThat(bean.getBuffer()).contains("prePersist1", "prePersist2", "postPersist1", "postPersist2");
+
+    final EBasicWithLifecycle found = DB.find(EBasicWithLifecycle.class, bean.getId());
+    found.setName("after");
+    found.update();
+    assertThat(found.getBuffer()).contains("preUpdate1", "preUpdate2", "postUpdate1", "postUpdate2");
+
+    final EBasicWithLifecycle check = DB.find(EBasicWithLifecycle.class, bean.getId());
+    assertThat(check.getOther()).isEqualTo("nullpreUpdate1");
   }
 
   @Test
