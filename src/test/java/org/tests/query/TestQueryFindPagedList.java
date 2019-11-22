@@ -5,6 +5,7 @@ import io.ebean.Ebean;
 import io.ebean.PagedList;
 import org.ebeantest.LoggedSqlCollector;
 import org.junit.Test;
+import org.tests.model.basic.Customer;
 import org.tests.model.basic.Order;
 import org.tests.model.basic.ResetBasicData;
 
@@ -22,15 +23,28 @@ import static org.junit.Assert.assertTrue;
 
 public class TestQueryFindPagedList extends BaseTestCase {
 
+  @Test
+  public void empty() {
+    PagedList<Customer> empty = PagedList.emptyList();
+
+    assertThat(empty.getList()).isEmpty();
+    assertThat(empty.getTotalPageCount()).isEqualTo(0);
+    assertThat(empty.getTotalCount()).isEqualTo(0);
+    assertThat(empty.getPageIndex()).isEqualTo(0);
+    assertThat(empty.getPageSize()).isEqualTo(0);
+    assertThat(empty.hasNext()).isFalse();
+    assertThat(empty.hasPrev()).isFalse();
+    assertThat(empty.getDisplayXtoYofZ("a", "b")).isEqualTo("");
+  }
 
   @Test(expected = PersistenceException.class)
-  public void test_noMaxRows() throws ExecutionException, InterruptedException {
+  public void test_noMaxRows() {
 
     Ebean.find(Order.class).findPagedList();
   }
 
   @Test
-  public void test_maxRows_NoCount() throws ExecutionException, InterruptedException {
+  public void test_maxRows_NoCount() {
 
     ResetBasicData.reset();
 
@@ -72,7 +86,7 @@ public class TestQueryFindPagedList extends BaseTestCase {
   }
 
   @Test
-  public void test_maxRows_countInBackground_withLoadRowCount() throws InterruptedException {
+  public void test_maxRows_countInBackground_withLoadRowCount() {
 
     ResetBasicData.reset();
 
@@ -140,7 +154,7 @@ public class TestQueryFindPagedList extends BaseTestCase {
   }
 
   @Test
-  public void test_noCount() throws ExecutionException, InterruptedException {
+  public void test_noCount() {
 
     ResetBasicData.reset();
 
@@ -178,7 +192,7 @@ public class TestQueryFindPagedList extends BaseTestCase {
 
 
   @Test
-  public void test_countInBackground_withLoadRowCount() throws InterruptedException {
+  public void test_countInBackground_withLoadRowCount() {
 
     ResetBasicData.reset();
 
@@ -194,7 +208,7 @@ public class TestQueryFindPagedList extends BaseTestCase {
 
 
   @Test
-  public void test_countUsingForegound() throws ExecutionException, InterruptedException {
+  public void test_countUsingForegound() {
 
     ResetBasicData.reset();
 
@@ -232,7 +246,7 @@ public class TestQueryFindPagedList extends BaseTestCase {
 
 
   @Test
-  public void test_usingAlias() throws ExecutionException, InterruptedException {
+  public void test_usingAlias() {
 
     ResetBasicData.reset();
 
