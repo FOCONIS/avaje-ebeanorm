@@ -17,6 +17,23 @@ public interface MetaInfoManager {
   ServerMetrics collectMetrics();
 
   /**
+   * Collect the metrics in raw JSON form.
+   * <pre>{@code
+   *
+   *   String metricsJson = database.getMetaInfoManager()
+   *       .collectMetricsAsJson()
+   *       .json();
+   *
+   * }</pre>
+   */
+  ServerMetricsAsJson collectMetricsAsJson();
+
+  /**
+   * Return the metrics as a list of MetricData.
+   */
+  List<MetricData> collectMetricsAsData();
+
+  /**
    * Collect query plans.
    */
   List<MetaQueryPlan> collectQueryPlans(QueryPlanRequest request);

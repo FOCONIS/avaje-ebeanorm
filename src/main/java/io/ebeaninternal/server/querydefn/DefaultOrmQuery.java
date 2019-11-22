@@ -51,6 +51,7 @@ import io.ebeaninternal.api.SpiTransaction;
 import io.ebeaninternal.server.autotune.ProfilingListener;
 import io.ebeaninternal.server.core.SpiOrmQueryRequest;
 import io.ebeaninternal.server.deploy.BeanDescriptor;
+import io.ebeaninternal.server.deploy.BeanNaturalKey;
 import io.ebeaninternal.server.deploy.BeanProperty;
 import io.ebeaninternal.server.deploy.BeanPropertyAssocMany;
 import io.ebeaninternal.server.deploy.InheritInfo;
@@ -75,6 +76,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 /**
  * Default implementation of an Object Relational query.
@@ -695,13 +697,15 @@ public class DefaultOrmQuery<T> implements SpiQuery<T> {
   }
 
   /**
-   * Setup to be a delete query.
+   * Setup to be a delete or update query.
    */
   @Override
-  public void setDelete() {
+  public void setupForDeleteOrUpdate(boolean deleteRequest) {
     // unset any paging and select on the id in the case where the query
     // includes joins and we use - delete ... where id in (...)
-    maxRows = 0;
+    if (deleteRequest) {
+      maxRows = 0;
+    }
     firstRow = 0;
     forUpdate = null;
     rootTableAlias = "${RTA}"; // alias we remove later
@@ -760,7 +764,7 @@ public class DefaultOrmQuery<T> implements SpiQuery<T> {
     if (underlyingList.size() == 1) {
       SpiExpression singleExpression = underlyingList.get(0);
       if (singleExpression instanceof IdInExpression) {
-        return new CacheIdLookup<>((IdInExpression)singleExpression);
+        return new CacheIdLookup<>((IdInExpression) singleExpression);
       }
     }
     return null;
@@ -772,8 +776,8 @@ public class DefaultOrmQuery<T> implements SpiQuery<T> {
     if (whereExpressions == null) {
       return null;
     }
-    String[] naturalKey = beanDescriptor.getNaturalKey();
-    if (naturalKey == null || naturalKey.length == 0) {
+    BeanNaturalKey naturalKey = beanDescriptor.getNaturalKey();
+    if (naturalKey == null) {
       return null;
     }
 
@@ -1460,7 +1464,7 @@ public class DefaultOrmQuery<T> implements SpiQuery<T> {
 
   @Override
   public Query<T> usingTransaction(Transaction transaction) {
-    this.transaction = (SpiTransaction)transaction;
+    this.transaction = (SpiTransaction) transaction;
     return this;
   }
 
@@ -1524,6 +1528,16 @@ public class DefaultOrmQuery<T> implements SpiQuery<T> {
   @Override
   public QueryIterator<T> findIterate() {
     return server.findIterate(this, transaction);
+  }
+
+  @Override
+  public Stream<T> findStream() {
+    return server.findStream(this, transaction);
+  }
+
+  @Override
+  public Stream<T> findLargeStream() {
+    return server.findLargeStream(this, transaction);
   }
 
   @Override

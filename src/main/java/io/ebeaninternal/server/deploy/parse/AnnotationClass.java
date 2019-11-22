@@ -11,7 +11,6 @@ import io.ebean.annotation.Index;
 import io.ebean.annotation.InvalidateQueryCache;
 import io.ebean.annotation.ReadAudit;
 import io.ebean.annotation.StorageEngine;
-import io.ebean.annotation.UpdateMode;
 import io.ebean.annotation.View;
 import io.ebean.config.TableName;
 import io.ebeaninternal.server.deploy.BeanDescriptor.EntityType;
@@ -135,12 +134,12 @@ public class AnnotationClass extends AnnotationParser {
     }
 
     for (Index index : findAnnotationsRecursive(cls, Index.class)) {
-      descriptor.addIndex(new IndexDefinition(index.columnNames(), index.name(), index.unique()));
+      descriptor.addIndex(new IndexDefinition(convertColumnNames(index.columnNames()), index.name(), index.unique()));
     }
 
     UniqueConstraint uc = findAnnotationRecursive(cls, UniqueConstraint.class);
     if (uc != null) {
-      descriptor.addIndex(new IndexDefinition(uc.columnNames()));
+      descriptor.addIndex(new IndexDefinition(convertColumnNames(uc.columnNames())));
     }
 
     View view = findAnnotationRecursive(cls, View.class);
@@ -151,7 +150,7 @@ public class AnnotationClass extends AnnotationParser {
     if (table != null) {
       UniqueConstraint[] uniqueConstraints = table.uniqueConstraints();
       for (UniqueConstraint c : uniqueConstraints) {
-        descriptor.addIndex(new IndexDefinition(c.columnNames()));
+        descriptor.addIndex(new IndexDefinition(convertColumnNames(c.columnNames())));
       }
     }
 
@@ -188,11 +187,6 @@ public class AnnotationClass extends AnnotationParser {
     DbComment comment = findAnnotationRecursive(cls, DbComment.class);
     if (comment != null) {
       descriptor.setDbComment(comment.value());
-    }
-
-    UpdateMode updateMode = findAnnotationRecursive(cls, UpdateMode.class);
-    if (updateMode != null) {
-      descriptor.setUpdateChangesOnly(updateMode.updateChangesOnly());
     }
 
     if (!disableL2Cache) {

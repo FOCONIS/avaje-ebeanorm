@@ -9,9 +9,11 @@ import io.ebean.meta.MetaOrmQueryNode;
 import io.ebean.meta.MetaQueryMetric;
 import io.ebean.meta.MetaQueryPlan;
 import io.ebean.meta.MetaTimedMetric;
+import io.ebean.meta.MetricData;
 import io.ebean.meta.MetricVisitor;
 import io.ebean.meta.QueryPlanRequest;
 import io.ebean.meta.ServerMetrics;
+import io.ebean.meta.ServerMetricsAsJson;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +42,16 @@ public class DefaultMetaInfoManager implements MetaInfoManager {
   @Override
   public ServerMetrics collectMetrics() {
     return visitBasic();
+  }
+
+  @Override
+  public ServerMetricsAsJson collectMetricsAsJson() {
+    return new DumpMetricsJson(server);
+  }
+
+  @Override
+  public List<MetricData> collectMetricsAsData() {
+    return new DumpMetricsData(server).data();
   }
 
   @Override
