@@ -758,6 +758,7 @@ public class BeanPropertyAssocOne<T> extends BeanPropertyAssoc<T> implements STr
     BeanProperty idProperty = targetDescriptor.getIdProperty();
     if (idProperty != null) {
       writeJson.writeStartObject(name);
+      writeJson.writeBeanVersion(targetDescriptor);
       idProperty.jsonWriteForInsert(writeJson, childBean);
       writeJson.writeEndObject();
     }
