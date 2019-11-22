@@ -446,11 +446,11 @@ class JdbcTransaction implements SpiTransaction, TxnProfileEventCodes {
   }
 
   /**
-   * Unregister the persisted bean.
+   * Unregister the persisted beans (when persisting at the top level).
    */
   @Override
-  public void unregisterBean(Object bean) {
-    persistingBeans.remove(bean);
+  public void unregisterBeans() {
+    persistingBeans.clear();
   }
 
   /**
@@ -639,10 +639,6 @@ class JdbcTransaction implements SpiTransaction, TxnProfileEventCodes {
    */
   @Override
   public boolean isBatchThisRequest() {
-    if (!batchOnCascadeSet && !explicit && depth <= 0) {
-      // implicit transaction, no gain by batching where depth <= 0
-      return false;
-    }
     return batchMode;
   }
 
@@ -789,6 +785,7 @@ class JdbcTransaction implements SpiTransaction, TxnProfileEventCodes {
       for (PersistDeferredRelationship deferred : deferredList) {
         deferred.execute(this);
       }
+      batchFlush();
       deferredList.clear();
     }
   }

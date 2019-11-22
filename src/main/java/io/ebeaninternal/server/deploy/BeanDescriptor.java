@@ -140,6 +140,10 @@ public class BeanDescriptor<T> implements BeanType<T>, STreeType {
   private final short profileBeanId;
 
   private final boolean multiValueSupported;
+  private boolean batchEscalateOnCascadeInsert;
+  private boolean batchEscalateOnCascadeDelete;
+
+  private final BeanIudMetrics iudMetrics;
 
   public enum EntityType {
     ORM, EMBEDDED, VIEW, SQL, DOC
@@ -373,6 +377,8 @@ public class BeanDescriptor<T> implements BeanType<T>, STreeType {
   private final BeanProperty[] propertiesGenUpdate;
   private final List<BeanProperty[]> propertiesUnique = new ArrayList<>();
 
+  private BeanNaturalKey beanNaturalKey;
+
   /**
    * The bean class name or the table name for MapBeans.
    */
@@ -406,11 +412,6 @@ public class BeanDescriptor<T> implements BeanType<T>, STreeType {
 
   private final String baseTableAlias;
 
-  /**
-   * If true then only changed properties get updated.
-   */
-  private final boolean updateChangesOnly;
-
   private final boolean cacheSharableBeans;
 
   private final String docStoreQueueId;
@@ -442,7 +443,7 @@ public class BeanDescriptor<T> implements BeanType<T>, STreeType {
     this.beanType = deploy.getBeanType();
     this.rootBeanType = PersistenceContextUtil.root(beanType);
     this.prototypeEntityBean = createPrototypeEntityBean(beanType);
-
+    this.iudMetrics = new BeanIudMetrics(name);
     this.namedQuery = deploy.getNamedQuery();
     this.namedRawSql = deploy.getNamedRawSql();
     this.inheritInfo = deploy.getInheritInfo();
@@ -466,7 +467,6 @@ public class BeanDescriptor<T> implements BeanType<T>, STreeType {
     this.selectLastInsertedId = deploy.getSelectLastInsertedId();
     this.selectLastInsertedIdDraft = deploy.getSelectLastInsertedIdDraft();
     this.concurrencyMode = deploy.getConcurrencyMode();
-    this.updateChangesOnly = deploy.isUpdateChangesOnly();
     this.indexDefinitions = deploy.getIndexDefinitions();
 
     this.readAuditing = deploy.isReadAuditing();
@@ -756,6 +756,36 @@ public class BeanDescriptor<T> implements BeanType<T>, STreeType {
       softDeleteByIdSql = null;
       softDeleteByIdInSql = null;
     }
+    initNaturalKey();
+  }
+
+  private void initNaturalKey() {
+    final String[] naturalKey = cacheHelp.getNaturalKey();
+    if (naturalKey != null && naturalKey.length != 0) {
+      BeanProperty[] props = new BeanProperty[naturalKey.length];
+      for (int i = 0; i < naturalKey.length; i++) {
+        props[i] = getBeanProperty(naturalKey[i]);
+      }
+      this.beanNaturalKey = new BeanNaturalKey(naturalKey, props);
+    }
+  }
+
+  private boolean hasCircularImportedId() {
+    for (BeanPropertyAssocOne<?> assocOne : propertiesOneImportedSave) {
+      if (assocOne.hasCircularImportedId(this)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  boolean hasCircularImportedIdTo(BeanDescriptor sourceDesc) {
+    for (BeanPropertyAssocOne<?> assocOne : propertiesOneImportedSave) {
+      if (assocOne.getTargetDescriptor() == sourceDesc) {
+        return true;
+      }
+    }
+    return false;
   }
 
   void registerColumn(String dbColumn, String path) {
@@ -818,6 +848,8 @@ public class BeanDescriptor<T> implements BeanType<T>, STreeType {
    */
   @SuppressWarnings("unchecked")
   void initialiseDocMapping() {
+    batchEscalateOnCascadeInsert = supportBatchEscalateOnInsert();
+    batchEscalateOnCascadeDelete = supportBatchEscalateOnDelete();
     for (BeanPropertyAssocMany<?> many : propertiesMany) {
       many.initialisePostTarget();
     }
@@ -832,6 +864,30 @@ public class BeanDescriptor<T> implements BeanType<T>, STreeType {
     cacheHelp.deriveNotifyFlags();
   }
 
+  private boolean supportBatchEscalateOnDelete() {
+    if (softDelete) {
+      return false;
+    }
+    for (BeanPropertyAssocMany<?> assocMany : propertiesManyDelete) {
+      if (assocMany.isCascadeDeleteEscalate()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean supportBatchEscalateOnInsert() {
+    return idType == IdType.IDENTITY || !hasCircularImportedId();
+  }
+
+  /**
+   * Return false if JDBC batch can't be implicitly escalated to.
+   * This happens when we have circular import id situation (need to defer setting identity value).
+   */
+  public boolean isBatchEscalateOnCascade(PersistRequest.Type type) {
+    return type == PersistRequest.Type.INSERT ? batchEscalateOnCascadeInsert : batchEscalateOnCascadeDelete;
+  }
+
   void initInheritInfo() {
     if (inheritInfo != null) {
       // need to check every BeanDescriptor in the inheritance hierarchy
@@ -842,6 +898,14 @@ public class BeanDescriptor<T> implements BeanType<T>, STreeType {
         deleteRecurseSkippable = inheritInfo.isDeleteRecurseSkippable();
       }
     }
+  }
+
+  public void metricPersistBatch(PersistRequest.Type type, long startNanos, int size) {
+    iudMetrics.addBatch(type, startNanos, size);
+  }
+
+  public void metricPersistNoBatch(PersistRequest.Type type, long startNanos) {
+    iudMetrics.addNoBatch(type, startNanos);
   }
 
   public void merge(EntityBean bean, EntityBean existing) {
@@ -1262,7 +1326,7 @@ public class BeanDescriptor<T> implements BeanType<T>, STreeType {
   /**
    * Return the draft dirty boolean property or null if there is not one assigned to this bean type.
    */
-  public BeanProperty getDraftDirty() {
+  BeanProperty getDraftDirty() {
     return draftDirty;
   }
 
@@ -1282,10 +1346,10 @@ public class BeanDescriptor<T> implements BeanType<T>, STreeType {
   }
 
   /**
-   * Return the natural key properties.
+   * Return the natural key.
    */
-  public String[] getNaturalKey() {
-    return cacheHelp.getNaturalKey();
+  public BeanNaturalKey getNaturalKey() {
+    return beanNaturalKey;
   }
 
   /**
@@ -1630,6 +1694,7 @@ public class BeanDescriptor<T> implements BeanType<T>, STreeType {
    * Visit all the ORM query plan metrics (includes UpdateQuery with updates and deletes).
    */
   public void visitMetrics(MetricVisitor visitor) {
+    iudMetrics.visit(visitor);
     for (CQueryPlan queryPlan : queryPlanCache.values()) {
       if (!queryPlan.isEmptyStats()) {
         visitor.visitOrmQuery(queryPlan.getSnapshot(visitor.isReset()));
@@ -1701,14 +1766,6 @@ public class BeanDescriptor<T> implements BeanType<T>, STreeType {
    */
   public String getUpdateImportedIdSql(ImportedId prop) {
     return "update " + baseTable + " set " + prop.importedIdClause() + " where " + idBinder.getBindIdSql(null);
-  }
-
-  /**
-   * Return true if updates should only include changed properties. Otherwise
-   * all loaded properties are included in the update.
-   */
-  public boolean isUpdateChangesOnly() {
-    return updateChangesOnly;
   }
 
   /**
@@ -3078,6 +3135,18 @@ public class BeanDescriptor<T> implements BeanType<T>, STreeType {
   }
 
   /**
+   * Set the generated Id value if appropriate.
+   */
+  public void setGeneratedId(EntityBean entityBean, Transaction transaction) {
+    if (idGenerator == null || idProperty == null || idProperty.isEmbedded()) {
+      return;
+    }
+    if (isNullOrZero(idProperty.getValue(entityBean))) {
+      convertSetId(nextId(transaction), entityBean);
+    }
+  }
+
+  /**
    * Return true if the Id value is marked as a <code>@GeneratedValue</code>.
    */
   public boolean isIdGeneratedValue() {
@@ -3183,9 +3252,11 @@ public class BeanDescriptor<T> implements BeanType<T>, STreeType {
   private boolean includesAggregation(OrmQueryProperties rootProps) {
     if (rootProps != null) {
       final Set<String> included = rootProps.getIncluded();
-      for (BeanProperty property : propertiesAggregate) {
-        if (included.contains(property.getName())) {
-          return true;
+      if (included != null) {
+        for (BeanProperty property : propertiesAggregate) {
+          if (included.contains(property.getName())) {
+            return true;
+          }
         }
       }
     }
@@ -3533,6 +3604,10 @@ public class BeanDescriptor<T> implements BeanType<T>, STreeType {
 
   public Object jsonReadCollection(SpiJsonReader readJson, EntityBean parentBean) throws IOException {
     throw new IllegalStateException("Unexpected - expect Element override");
+  }
+
+  public boolean isJsonReadCollection() {
+    return false;
   }
 
   public void jsonWrite(SpiJsonWriter writeJson, EntityBean bean) throws IOException {
