@@ -39,11 +39,8 @@ import java.util.Map;
 public class BeanPropertyAssocOne<T> extends BeanPropertyAssoc<T> implements STreePropertyAssocOne {
 
   private final boolean oneToOne;
-
   private final boolean oneToOneExported;
-
   private final boolean orphanRemoval;
-
   private final boolean primaryKeyExport;
   private final boolean primaryKeyJoin;
 
@@ -89,7 +86,6 @@ public class BeanPropertyAssocOne<T> extends BeanPropertyAssoc<T> implements STr
       for (BeanProperty embeddedProp : embeddedProps) {
         embeddedPropsMap.put(embeddedProp.getName(), embeddedProp);
       }
-
     } else {
       embeddedProps = null;
       embeddedPropsMap = null;
@@ -212,6 +208,14 @@ public class BeanPropertyAssocOne<T> extends BeanPropertyAssoc<T> implements STr
         }
       }
     }
+  }
+
+  Object naturalKeyVal(Map<String, Object> values) {
+    EntityBean bean = (EntityBean) values.get(name);
+    if (bean == null) {
+      return null;
+    }
+    return targetIdBinder.cacheKeyFromBean(bean);
   }
 
   @Override
@@ -810,5 +814,9 @@ public class BeanPropertyAssocOne<T> extends BeanPropertyAssoc<T> implements STr
         beanProperty.setValue(child, parent);
       }
     }
+  }
+
+  public boolean hasCircularImportedId(BeanDescriptor<?> sourceDesc) {
+    return targetDescriptor.hasCircularImportedIdTo(sourceDesc);
   }
 }
