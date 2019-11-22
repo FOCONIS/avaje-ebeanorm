@@ -75,7 +75,9 @@ public class IdInExpression extends NonPrepareExpression {
 
   @Override
   public void addBindValues(SpiExpressionRequest request) {
-
+    if (idCollection.isEmpty()) {
+      return;
+    }
     // Bind the Id values including EmbeddedId and multiple Id
 
     DefaultExpressionRequest r = (DefaultExpressionRequest) request;
@@ -93,7 +95,7 @@ public class IdInExpression extends NonPrepareExpression {
     BeanDescriptor<?> descriptor = r.getBeanDescriptor();
     IdBinder idBinder = descriptor.getIdBinder();
     if (idCollection.isEmpty()) {
-      request.append("1=0"); // append false for this stage
+      request.append(SQL_FALSE); // append false for this stage
     } else {
       request.append(descriptor.getIdBinder().getBindIdInSql(null));
       String inClause = idBinder.getIdInValueExpr(false, idCollection.size());
@@ -108,7 +110,7 @@ public class IdInExpression extends NonPrepareExpression {
     BeanDescriptor<?> descriptor = r.getBeanDescriptor();
     IdBinder idBinder = descriptor.getIdBinder();
     if (idCollection.isEmpty()) {
-      request.append("1=0"); // append false for this stage
+      request.append(SQL_FALSE); // append false for this stage
     } else {
       request.append(descriptor.getIdBinderInLHSSql());
       String inClause = idBinder.getIdInValueExpr(false, idCollection.size());
@@ -122,7 +124,7 @@ public class IdInExpression extends NonPrepareExpression {
   @Override
   public void queryPlanHash(StringBuilder builder) {
     builder.append("IdIn[?");
-    if (!multiValueIdSupported) {
+    if (!multiValueIdSupported || idCollection.isEmpty()) {
       // query plan specific to the number of parameters in the IN clause
       builder.append(idCollection.size());
     }
