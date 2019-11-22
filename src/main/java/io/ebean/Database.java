@@ -1196,17 +1196,6 @@ public interface Database {
    * <b>Optimistic Locking: </b> Note that if the version property is not set when update() is
    * called then no optimistic locking is performed (internally ConcurrencyMode.NONE is used).
    * </p>
-   * <p>
-   * <b>{@link ServerConfig#setUpdatesDeleteMissingChildren(boolean)}: </b> When cascade saving to a
-   * OneToMany or ManyToMany the updatesDeleteMissingChildren setting controls if any other children
-   * that are in the database but are not in the collection are deleted.
-   * </p>
-   * <p>
-   * <b>{@link ServerConfig#setUpdateChangesOnly(boolean)}: </b> The updateChangesOnly setting
-   * controls if only the changed properties are included in the update or if all the loaded
-   * properties are included instead.
-   * </p>
-   * <p>
    * <pre>{@code
    *
    * // A 'stateless update' example
@@ -1216,9 +1205,6 @@ public interface Database {
    * database.update(customer);
    *
    * }</pre>
-   *
-   * @see ServerConfig#setUpdatesDeleteMissingChildren(boolean)
-   * @see ServerConfig#setUpdateChangesOnly(boolean)
    */
   void update(Object bean) throws OptimisticLockException;
 
@@ -1226,16 +1212,6 @@ public interface Database {
    * Update a bean additionally specifying a transaction.
    */
   void update(Object bean, Transaction transaction) throws OptimisticLockException;
-
-  /**
-   * Update a bean additionally specifying a transaction and the deleteMissingChildren setting.
-   *
-   * @param bean                  the bean to update
-   * @param transaction           the transaction to use (can be null).
-   * @param deleteMissingChildren specify false if you do not want 'missing children' of a OneToMany
-   *                              or ManyToMany to be automatically deleted.
-   */
-  void update(Object bean, Transaction transaction, boolean deleteMissingChildren) throws OptimisticLockException;
 
   /**
    * Update a collection of beans. If there is no current transaction one is created and used to
