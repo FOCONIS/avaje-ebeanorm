@@ -172,4 +172,12 @@ public class EBasicWithLifecycle extends Model {
     return buffer.toString();
   }
 
+  public void _ebean_onPersistTrigger() {
+    buffer.append("onPersistTrigger");
+  }
+
+  public void clearBuffer() {
+    buffer.setLength(0);
+  }
+
 }
