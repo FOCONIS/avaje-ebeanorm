@@ -1,7 +1,7 @@
 package org.tests.model.elementcollection;
 
 import io.ebean.BaseTestCase;
-import io.ebean.Ebean;
+import io.ebean.DB;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,10 +15,10 @@ public class TestElementCollectionEnumSet extends BaseTestCase {
     person.getTags().add(EcEnumPerson.Tags.BLUE);
     person.getTags().add(EcEnumPerson.Tags.RED);
 
-    Ebean.save(person);
+    DB.save(person);
 
 
-    EcEnumPerson one = Ebean.find(EcEnumPerson.class)
+    EcEnumPerson one = DB.find(EcEnumPerson.class)
       .setId(person.getId())
       .fetch("tags")
       .findOne();
@@ -28,6 +28,23 @@ public class TestElementCollectionEnumSet extends BaseTestCase {
     one.getTags().add(EcEnumPerson.Tags.GREEN);
     one.getTags().remove(EcEnumPerson.Tags.BLUE);
 
-    Ebean.save(one);
+    DB.save(one);
+  }
+
+  @Test
+  public void json() {
+
+    EcEnumPerson person = new EcEnumPerson("Enum Person");
+    person.getTags().add(EcEnumPerson.Tags.BLUE);
+    person.getTags().add(EcEnumPerson.Tags.RED);
+
+    final String asJson = DB.json().toJson(person);
+
+    assertThat(asJson).isEqualTo("{\"name\":\"Enum Person\",\"tags\":[\"BLUE\",\"RED\"]}");
+
+    final EcEnumPerson fromJson = DB.json().toBean(EcEnumPerson.class, asJson);
+    assertThat(fromJson.getName()).isEqualTo("Enum Person");
+    assertThat(fromJson.getTags()).hasSize(2);
+    assertThat(fromJson.getTags().toString()).isEqualTo("BeanSet size[2] set[BLUE, RED]");
   }
 }
