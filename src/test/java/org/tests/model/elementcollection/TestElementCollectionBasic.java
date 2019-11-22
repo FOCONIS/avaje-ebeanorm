@@ -17,6 +17,36 @@ public class TestElementCollectionBasic extends BaseTestCase {
   }
 
   @Test
+  public void insertThen_UpdateWhenNotChanged_expect_noChanges() {
+
+    EcPerson person = new EcPerson("Nothing021");
+    person.getPhoneNumbers().add("021 1234");
+    person.getPhoneNumbers().add("021 4321");
+
+    LoggedSqlCollector.start();
+    Ebean.save(person);
+
+    List<String> sql = LoggedSqlCollector.current();
+    assertThat(eventLog()).containsOnly("preInsert", "postInsert");
+    assertThat(sql).hasSize(4);
+
+    final EcPerson found = Ebean.find(EcPerson.class, person.getId());
+    found.getPhoneNumbers().size();
+
+    sql = LoggedSqlCollector.current();
+    assertThat(sql).hasSize(2);
+    assertThat(sql.get(0)).contains("from ec_person t0 where t0.id = ?");
+    assertThat(sql.get(1)).contains("from ec_person_phone t0 where");
+
+    // save when not actually changed
+    Ebean.save(found);
+
+    sql = LoggedSqlCollector.stop();
+    assertThat(sql).isEmpty();
+    assertThat(eventLog()).isEmpty();
+  }
+
+  @Test
   public void test() {
 
     eventLog();
@@ -131,11 +161,12 @@ public class TestElementCollectionBasic extends BaseTestCase {
 
     List<String> sql = LoggedSqlCollector.current();
     if (isPersistBatchOnCascade()) {
-      assertThat(sql).hasSize(6);
+      assertThat(sql).hasSize(7);
       assertThat(sql.get(0)).contains("update ec_person set name=?, version=? where id=? and version=?");
       assertThat(sql.get(1)).contains("delete from ec_person_phone where owner_id=?");
-      assertThat(sql.get(2)).contains("insert into ec_person_phone (owner_id,phone) values (?,?)");
-      assertSqlBind(sql, 3, 5);
+      assertSqlBind(sql.get(2));
+      assertThat(sql.get(3)).contains("insert into ec_person_phone (owner_id,phone) values (?,?)");
+      assertSqlBind(sql, 4, 6);
 
     } else {
       assertThat(sql).hasSize(5);
@@ -214,10 +245,11 @@ public class TestElementCollectionBasic extends BaseTestCase {
 
     List<String> sql = LoggedSqlCollector.current();
     if (isPersistBatchOnCascade()) {
-      assertThat(sql).hasSize(8);
+      assertThat(sql).hasSize(9);
       assertThat(sql.get(0)).contains("delete from ec_person_phone where owner_id=?");
-      assertThat(sql.get(1)).contains("insert into ec_person_phone (owner_id,phone) values (?,?)");
-      assertSqlBind(sql, 2, 7);
+      assertSqlBind(sql.get(1));
+      assertThat(sql.get(2)).contains("insert into ec_person_phone (owner_id,phone) values (?,?)");
+      assertSqlBind(sql, 3, 8);
 
     } else {
       assertThat(sql).hasSize(7);
