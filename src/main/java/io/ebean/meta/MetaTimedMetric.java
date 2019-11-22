@@ -4,17 +4,7 @@ package io.ebean.meta;
 /**
  * Timed execution statistics.
  */
-public interface MetaTimedMetric {
-
-  /**
-   * Return the metric type.
-   */
-  MetricType getMetricType();
-
-  /**
-   * Return the metric name.
-   */
-  String getName();
+public interface MetaTimedMetric extends MetaMetric {
 
   /**
    * Return the metric location if defined.
@@ -48,7 +38,7 @@ public interface MetaTimedMetric {
 
   /**
    * Return the total beans or rows processed or loaded.
-   *
+   * <p>
    * This will be 0 if the metric isn't a query plan (like transaction execution statistics).
    */
   long getBeanCount();

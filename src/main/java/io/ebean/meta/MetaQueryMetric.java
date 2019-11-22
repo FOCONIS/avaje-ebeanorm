@@ -1,7 +1,5 @@
 package io.ebean.meta;
 
-import io.ebean.ProfileLocation;
-
 /**
  * Query execution metrics.
  */
@@ -18,13 +16,13 @@ public interface MetaQueryMetric extends MetaTimedMetric {
   String getLabel();
 
   /**
-   * Return the profile location.
-   */
-  ProfileLocation getProfileLocation();
-
-  /**
    * The actual SQL of the query.
    */
   String getSql();
+
+  /**
+   * Return the hash of the plan.
+   */
+  String getHash();
 
 }

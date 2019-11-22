@@ -74,11 +74,8 @@ public final class DefaultPersister implements Persister {
 
   private final BeanDescriptorManager beanDescriptorManager;
 
-  private final boolean updatesDeleteMissingChildren;
-
   public DefaultPersister(SpiEbeanServer server, Binder binder, BeanDescriptorManager descMgr) {
     this.server = server;
-    this.updatesDeleteMissingChildren = server.getServerConfig().isUpdatesDeleteMissingChildren();
     this.beanDescriptorManager = descMgr;
     this.persistExecute = new DefaultPersistExecute(binder, server.getServerConfig().getPersistBatchSize());
   }
@@ -152,6 +149,16 @@ public final class DefaultPersister implements Persister {
     } else {
       executeSqlUpdate(update, t);
     }
+  }
+
+  @Override
+  public void addToFlushQueue(SpiSqlUpdate update, SpiTransaction t) {
+    addToFlushQueue(update, t, true);
+  }
+
+  @Override
+  public void addToFlushQueueLast(SpiSqlUpdate update, SpiTransaction t) {
+    addToFlushQueue(update, t, false);
   }
 
   private void addToFlushQueue(SpiSqlUpdate update, SpiTransaction t, boolean early) {
@@ -407,17 +414,7 @@ public final class DefaultPersister implements Persister {
    */
   @Override
   public void update(EntityBean entityBean, Transaction t) {
-    update(entityBean, t, updatesDeleteMissingChildren);
-  }
-
-  /**
-   * Update the bean specifying deleteMissingChildren.
-   */
-  @Override
-  public void update(EntityBean entityBean, Transaction t, boolean deleteMissingChildren) {
-
     PersistRequestBean<?> req = createRequest(entityBean, t, PersistRequest.Type.UPDATE);
-    req.setDeleteMissingChildren(deleteMissingChildren);
     req.checkDraft();
     try {
       req.initTransIfRequiredWithBatchCascade();
@@ -448,8 +445,7 @@ public final class DefaultPersister implements Persister {
   @Override
   public void save(EntityBean bean, Transaction t) {
     if (bean._ebean_getIntercept().isUpdate()) {
-      // deleteMissingChildren is false when using 'save' on 'loaded' beans
-      update(bean, t, false);
+      update(bean, t);
     } else {
       insert(bean, t);
     }
@@ -487,6 +483,7 @@ public final class DefaultPersister implements Persister {
   }
 
   private void saveRecurse(PersistRequestBean<?> request) {
+    request.setSaveRecurse();
     if (request.isReference()) {
       // its a reference...
       if (request.isPersistCascade()) {
@@ -519,11 +516,7 @@ public final class DefaultPersister implements Persister {
         // save associated One beans recursively first
         saveAssocOne(request);
       }
-
-      // set the IDGenerated value if required
-      setIdGenValue(request);
       request.executeOrQueue();
-
       if (request.isPersistCascade()) {
         // save any associated List held beans
         saveAssocMany(request);
@@ -966,18 +959,15 @@ public final class DefaultPersister implements Persister {
 
   private SaveManyBase saveManyRequest(boolean insertedParent, BeanPropertyAssocMany<?> many, EntityBean parentBean, PersistRequestBean<?> request) {
     if (!many.isElementCollection()) {
-      return new SaveManyBeans(insertedParent, many, parentBean, request, this);
-
+      return new SaveManyBeans(this, insertedParent, many, parentBean, request);
     } else if (many.getManyType().isMap()) {
-      return new SaveManyElementCollectionMap(insertedParent, many, parentBean, request);
-
+      return new SaveManyElementCollectionMap(this, insertedParent, many, parentBean, request);
     } else {
-      return new SaveManyElementCollection(insertedParent, many, parentBean, request);
+      return new SaveManyElementCollection(this, insertedParent, many, parentBean, request);
     }
   }
 
   void deleteManyIntersection(EntityBean bean, BeanPropertyAssocMany<?> many, SpiTransaction t, boolean publish, boolean queue) {
-
     SpiSqlUpdate sqlDelete = deleteAllIntersection(bean, many, publish);
     if (queue) {
       addToFlushQueue(sqlDelete, t, true);
@@ -1207,33 +1197,6 @@ public final class DefaultPersister implements Persister {
           }
         }
       }
-    }
-  }
-
-  /**
-   * Set Id Generated value for insert.
-   */
-  private void setIdGenValue(PersistRequestBean<?> request) {
-
-    BeanDescriptor<?> desc = request.getBeanDescriptor();
-    if (!desc.isUseIdGenerator()) {
-      return;
-    }
-
-    BeanProperty idProp = desc.getIdProperty();
-    if (idProp == null || idProp.isEmbedded()) {
-      // not supporting IdGeneration for concatenated or Embedded
-      return;
-    }
-
-    EntityBean bean = request.getEntityBean();
-    Object uid = idProp.getValue(bean);
-
-    if (isNullOrZero(uid)) {
-      // generate the nextId and set it to the property
-      Object nextId = desc.nextId(request.getTransaction());
-      // cast the data type if required and set it
-      desc.convertSetId(nextId, bean);
     }
   }
 
