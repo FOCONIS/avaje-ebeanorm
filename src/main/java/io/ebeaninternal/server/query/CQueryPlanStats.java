@@ -193,11 +193,6 @@ public final class CQueryPlanStats {
     }
 
     @Override
-    public ProfileLocation getProfileLocation() {
-      return queryPlan.getProfileLocation();
-    }
-
-    @Override
     public long getBeanCount() {
       return metrics.getBeanCount();
     }
@@ -238,8 +233,8 @@ public final class CQueryPlanStats {
     }
 
     @Override
-    public String getSqlHash() {
-      return queryPlan.getSqlHash();
+    public String getHash() {
+      return queryPlan.getHash();
     }
 
     @Override
