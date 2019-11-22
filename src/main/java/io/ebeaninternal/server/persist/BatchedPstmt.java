@@ -1,7 +1,7 @@
 package io.ebeaninternal.server.persist;
 
-import io.ebeaninternal.api.SpiTransaction;
 import io.ebeaninternal.api.SpiProfileTransactionEvent;
+import io.ebeaninternal.api.SpiTransaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +44,7 @@ public class BatchedPstmt implements SpiProfileTransactionEvent {
   private final SpiTransaction transaction;
 
   private long profileStart;
+  private long timedStart;
 
   private int[] results;
 
@@ -74,10 +75,29 @@ public class BatchedPstmt implements SpiProfileTransactionEvent {
   }
 
   /**
-   * Return the statement.
+   * Return the statement adding the postExecute task.
    */
-  public PreparedStatement getStatement() {
+  public PreparedStatement getStatement(BatchPostExecute postExecute) throws SQLException {
+    if (postExecute.isFlushQueue() && list.size() >= 20) {
+      flushStatementBatch();
+    }
+    list.add(postExecute);
     return pstmt;
+  }
+
+  /**
+   * Flush this PreparedStatement using executeBatch() as this was queued element collection
+   * or intersection table sql (and otherwise it can be unlimited size).
+   */
+  private void flushStatementBatch() throws SQLException {
+    final int[] rows = pstmt.executeBatch();
+    if (rows.length != list.size()) {
+      throw new IllegalStateException("Invalid state? rows:" + rows.length + " != " + list.size());
+    }
+    for (BatchPostExecute item : list) {
+      item.postExecute();
+    }
+    list.clear();
   }
 
   /**
@@ -93,14 +113,21 @@ public class BatchedPstmt implements SpiProfileTransactionEvent {
    */
   public void executeBatch(boolean getGeneratedKeys) throws SQLException {
 
-    this.profileStart = transaction.profileOffset();
+    timedStart = System.nanoTime();
+    profileStart = transaction.profileOffset();
     executeAndCheckRowCounts();
     if (isGenKeys && getGeneratedKeys) {
       getGeneratedKeys();
     }
     postExecute();
     close();
+    addTimingMetrics();
     transaction.profileEvent(this);
+  }
+
+  private void addTimingMetrics() {
+    // just use the first persist request to add batch metrics
+    list.get(0).addTimingBatch(timedStart, list.size());
   }
 
   @Override
@@ -132,7 +159,6 @@ public class BatchedPstmt implements SpiProfileTransactionEvent {
         String s = "results array error " + results.length + " " + list.size();
         throw new SQLException(s);
       }
-
       // check for concurrency exceptions...
       for (int i = 0; i < results.length; i++) {
         list.get(i).checkRowCount(results[i]);
