@@ -92,6 +92,16 @@ public abstract class DmlHandler implements PersistHandler, BindableRequest {
   @Override
   public abstract int execute() throws SQLException;
 
+  @Override
+  public final int executeNoBatch() throws SQLException {
+    final long startNanos = System.nanoTime();
+    try {
+      return execute();
+    } finally {
+      persistRequest.addTimingNoBatch(startNanos);
+    }
+  }
+
   /**
    * Check the rowCount.
    */
@@ -250,13 +260,13 @@ public abstract class DmlHandler implements PersistHandler, BindableRequest {
   /**
    * Return a prepared statement taking into account batch requirements.
    */
-  PreparedStatement getPstmt(SpiTransaction t, String sql, PersistRequestBean<?> request, boolean genKeys) throws SQLException {
+  PreparedStatement getPstmtBatch(SpiTransaction t, String sql, PersistRequestBean<?> request, boolean genKeys) throws SQLException {
 
     BatchedPstmtHolder batch = t.getBatchControl().getPstmtHolder();
-    batchedPstmt = batch.getBatchedPstmt(sql, request);
+    batchedPstmt = batch.getBatchedPstmt(sql);
     if (batchedPstmt != null) {
       batchedStatus = BATCHED;
-      return batchedPstmt.getStatement();
+      return batchedPstmt.getStatement(request);
     }
 
     batchedStatus = BATCHED_FIRST;
