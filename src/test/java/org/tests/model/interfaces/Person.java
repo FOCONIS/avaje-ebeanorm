@@ -12,7 +12,6 @@ import javax.persistence.OneToMany;
 import javax.persistence.Version;
 
 import io.ebean.annotation.EntityImplements;
-import io.ebean.annotation.PrivateOwned;
 
 @Entity
 @EntityImplements(IPerson.class)
@@ -26,8 +25,7 @@ public class Person implements IPerson {
   @ManyToOne(cascade = CascadeType.PERSIST)
   private IAddress defaultAddress;
 
-  @OneToMany(cascade = CascadeType.PERSIST)
-  @PrivateOwned
+  @OneToMany(cascade = CascadeType.PERSIST, orphanRemoval = true)
   private List<IAddress> extraAddresses = new ArrayList<>();
 
   @ManyToMany(cascade = CascadeType.PERSIST)
