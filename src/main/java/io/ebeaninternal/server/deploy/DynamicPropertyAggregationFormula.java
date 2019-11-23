@@ -38,7 +38,8 @@ class DynamicPropertyAggregationFormula extends DynamicPropertyBase {
         this.mapKey = null;
       } else {
         this.alias = alias.substring(0, pos);
-        if (asTarget != null && Map.class.isAssignableFrom(asTarget.getPropertyType())) {
+        if (asTarget instanceof BeanPropertyAssocMany
+            && ((BeanPropertyAssocMany) asTarget).getManyType() == ManyType.MAP) {
           this.mapKey = name.substring(pos + asTarget.getName().length() + 2);
         } else {
           this.mapKey = null;
