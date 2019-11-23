@@ -199,6 +199,7 @@ public class TestDbArray_basic extends BaseTestCase {
    */
   @ForPlatform({Platform.H2, Platform.POSTGRES})
   @Test
+  @IgnorePlatform({Platform.SQLSERVER, Platform.MYSQL})
   public void nullItems() {
     EArrayBean bean = new EArrayBean();
     bean.setName("null items");
