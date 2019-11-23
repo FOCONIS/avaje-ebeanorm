@@ -762,12 +762,6 @@ class CQueryBuilder {
         sb.append(" order by ").append(dbOrderBy);
       }
 
-
-      if (query.isCountDistinct() && query.isSingleAttribute()) {
-        sb.append(") r1 group by r1.attribute_");
-        sb.append(toSql(query.getCountDistinctOrder()));
-      }
-
       if (useSqlLimiter) {
         // use LIMIT/OFFSET, ROW_NUMBER() or rownum type SQL query limitation
         SqlLimitRequest r = new OrmQueryLimitRequest(sb.toString(), dbOrderBy, query, dbPlatform, distinct);
