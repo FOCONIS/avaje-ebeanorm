@@ -358,8 +358,9 @@ public class BootupClasses implements ClassFilter {
 
   @Override
   public boolean isMatch(Class<?> cls) {
-
-    if (isEmbeddable(cls)) {
+    if (cls.isInterface()) {
+      return false; // we are only interested in classes
+    } else if (isEmbeddable(cls)) {
       embeddableList.add(cls);
 
     } else if (isEntity(cls)) {
