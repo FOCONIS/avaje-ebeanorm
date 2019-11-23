@@ -1,6 +1,5 @@
 package org.tests.model.basic;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.ManyToMany;

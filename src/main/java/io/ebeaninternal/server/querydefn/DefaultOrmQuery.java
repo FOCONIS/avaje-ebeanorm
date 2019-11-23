@@ -26,7 +26,6 @@ import io.ebean.Transaction;
 import io.ebean.UpdateQuery;
 import io.ebean.Version;
 import io.ebean.bean.CallOrigin;
-import io.ebean.bean.CallStack;
 import io.ebean.bean.EntityBean;
 import io.ebean.bean.ObjectGraphNode;
 import io.ebean.bean.ObjectGraphOrigin;
@@ -1586,12 +1585,12 @@ public class DefaultOrmQuery<T> implements SpiQuery<T> {
     this.countDistinctDto = countDistinctDto;
     return this;
   }
-  
+
   @Override
   public Class<?> getCountDistinctDto() {
     return countDistinctDto;
   }
-  
+
   @Override
   public <A> A findSingleAttribute() {
     List<A> list = findSingleAttributeList();

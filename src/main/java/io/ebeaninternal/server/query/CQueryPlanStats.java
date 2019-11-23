@@ -1,6 +1,5 @@
 package io.ebeaninternal.server.query;
 
-import io.ebean.ProfileLocation;
 import io.ebean.bean.ObjectGraphNode;
 import io.ebean.meta.MetaOrmQueryMetric;
 import io.ebean.meta.MetaOrmQueryOrigin;
