@@ -2,9 +2,9 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.avaje</groupId>
-    <artifactId>java8-oss</artifactId>
-    <version>2.1</version>
+    <groupId>de.foconis.jfof</groupId>
+    <artifactId>foconis-parent</artifactId>
+    <version>1.1.13</version>
   </parent>
 
   <groupId>io.ebean</groupId>
@@ -19,7 +19,7 @@
     <jackson-core.version>2.10.0</jackson-core.version>
     <jackson-databind.version>2.10.0</jackson-databind.version>
     <snakeyaml.version>1.21</snakeyaml.version>
-    <agent.version>12.1.5</agent.version>
+    <agent.version>12.1.6-FOC3</agent.version>
   </properties>
 
   <scm>
@@ -448,14 +448,6 @@
         </configuration>
       </plugin>      
     </plugins>
-
-	<extensions>
-		<extension>
-			<groupId>org.apache.maven.wagon</groupId>
-			<artifactId>wagon-ssh</artifactId>
-			<version>2.10</version>
-		</extension>
-	</extensions>     
   </build>
   
   <repositories>
@@ -468,32 +460,5 @@
   	  <url>https://repo.foconis.de/maven-snapshot/</url>
   	</repository>
   </repositories>
-  
-  <pluginRepositories>
-    <pluginRepository>
-      <id>foconis-release</id>
-      <url>https://repo.foconis.de/maven-release/</url>
-    </pluginRepository>
-    <pluginRepository>
-      <id>foconis-snapshot</id>
-      <url>https://repo.foconis.de/maven-snapshot/</url>
-    </pluginRepository>
-  </pluginRepositories>
-  <!-- 
-  use   mvn clean source:jar deploy -DaltDeploymentRepository=foconis::default::sftp://bamboo@repo.foconis.de/var/www/html/repo/maven-snapshot/
- 
-   -->
-  <distributionManagement>
-    <repository>
-      <id>foconis-snapshot</id>
-      <name>Default Deploy Repository</name>
-      <url>sftp://bamboo@repo.foconis.de/var/www/html/repo/maven-release/</url>
-    </repository>
-    <snapshotRepository>
-      <id>foconis-snapshot</id>
-      <name>Default Deploy Repository</name>
-      <url>sftp://bamboo@repo.foconis.de/var/www/html/repo/maven-snapshot/</url>
-    </snapshotRepository>
-  </distributionManagement>
 
 </project>
