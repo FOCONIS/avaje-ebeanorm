@@ -72,9 +72,10 @@ public class SimpleExpression extends AbstractValueExpression {
   public void addBindValues(SpiExpressionRequest request) {
 
     ElPropertyValue prop = getElProp(request);
+    Object value = value();
     if (prop != null) {
       if (prop.isAssocId()) {
-        Object[] ids = prop.getAssocIdValues((EntityBean) value());
+        Object[] ids = prop.getAssocIdValues((EntityBean) value);
         if (ids != null) {
           for (Object id : ids) {
             request.addBindValue(id);
@@ -82,18 +83,19 @@ public class SimpleExpression extends AbstractValueExpression {
         }
         return;
       }
+      value = prop.getBeanProperty().convert(value);
       if (prop.isDbEncrypted()) {
         // bind the key as well as the value
         String encryptKey = prop.getBeanProperty().getEncryptKey().getStringValue();
         request.addBindEncryptKey(encryptKey);
       } else if (prop.isLocalEncrypted()) {
-        Object bindVal = prop.localEncrypt(value());
+        Object bindVal = prop.localEncrypt(value);
         request.addBindEncryptKey(bindVal);
         return;
       }
     }
 
-    request.addBindValue(value());
+    request.addBindValue(value);
   }
 
   @Override
