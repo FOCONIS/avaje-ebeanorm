@@ -2,14 +2,79 @@ package io.ebean.util;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * Annotation utility methods to find annotations.
  */
 public class AnnotationUtil {
+
+  private static final Map<AnnotatedElement, AnnotationMeta> annotationCache = new ConcurrentHashMap<>();
+
+  /**
+   * Caches all annotations for an annotated element.
+   */
+  static class AnnotationMeta {
+
+    final Map<Class<? extends Annotation>, Set<Annotation>> annotations = new HashMap<>();
+
+    AnnotationMeta(AnnotatedElement elem) {
+      Annotation[] anns = elem.getAnnotations();
+      Set<Annotation> visited = new HashSet<>();
+
+      if (elem instanceof Class) {
+        Class<?> clazz = (Class<?>) elem;
+        do {
+          scanAnnotations(clazz.getAnnotations(), visited);
+          clazz = clazz.getSuperclass();
+        } while (clazz != null && clazz != Object.class);
+      } else {
+        scanAnnotations(anns, visited);
+      }
+
+      // seal the metadata
+      for (Map.Entry<Class<? extends Annotation>, Set<Annotation>> entry : annotations.entrySet()) {
+        entry.setValue(Collections.unmodifiableSet(entry.getValue()));
+      }
+    }
+
+    <A extends Annotation> void scanAnnotations(A[] anns, Set<Annotation> visited) {
+      for (Annotation ann : anns) {
+        if (visited.add(ann) && notJavaLang(ann)) {
+          Class<? extends Annotation> type = ann.annotationType();
+          annotations.computeIfAbsent(type, k -> new LinkedHashSet<>()).add(ann);
+          scanAnnotations(type.getAnnotations(), visited);
+        }
+      }
+    }
+
+    @SuppressWarnings("unchecked")
+    <A extends Annotation> Set<A> findAnnotations(Class<A> annotationType) {
+      return (Set<A>) annotations.getOrDefault(annotationType, Collections.emptySet());
+    }
+
+    @SuppressWarnings("unchecked")
+    <A extends Annotation> A findAnnotation(Class<A> annotationType) {
+      Set<Annotation> set = annotations.get(annotationType);
+      return set == null ? null : (A) set.iterator().next();
+    }
+
+    Set<Annotation> finaAllMetaAnnotations(Set<Class<?>> annotationTypes) {
+      return Collections.unmodifiableSet(
+        annotationTypes.stream()
+          .map(it -> annotations.getOrDefault(it, Collections.emptySet()))
+          .flatMap(Collection::stream)
+          .collect(Collectors.toSet()));
+    }
+  }
 
   /**
    * Determine if the supplied {@link Annotation} is defined in the core JDK {@code java.lang.annotation} package.
@@ -22,7 +87,7 @@ public class AnnotationUtil {
    * Simple get on field or method with no meta-annotations or platform filtering.
    */
   public static <A extends Annotation> A get(AnnotatedElement element, Class<A> annotation) {
-    return element.getAnnotation(annotation);
+    return annotationCache.computeIfAbsent(element, AnnotationMeta::new).findAnnotation(annotation);
   }
 
   /**
@@ -36,33 +101,14 @@ public class AnnotationUtil {
    * On class get the annotation - includes inheritance.
    */
   public static <A extends Annotation> A typeGet(Class<?> clazz, Class<A> annotationType) {
-    while (clazz != null && clazz != Object.class) {
-      final A val = clazz.getAnnotation(annotationType);
-      if (val != null) {
-        return val;
-      }
-      clazz = clazz.getSuperclass();
-    }
-    return null;
+    return annotationCache.computeIfAbsent(clazz, AnnotationMeta::new).findAnnotation(annotationType);
   }
 
   /**
    * On class get all the annotations - includes inheritance.
    */
   public static <A extends Annotation> Set<A> typeGetAll(Class<?> clazz, Class<A> annotationType) {
-    Set<A> result = new LinkedHashSet<>();
-    typeGetAllCollect(clazz, annotationType, result);
-    return result;
-  }
-
-  private static <A extends Annotation> void typeGetAllCollect(Class<?> clazz, Class<A> annotationType, Set<A> result) {
-    while (clazz != null && clazz != Object.class) {
-      final A val = clazz.getAnnotation(annotationType);
-      if (val != null) {
-        result.add(val);
-      }
-      clazz = clazz.getSuperclass();
-    }
+    return annotationCache.computeIfAbsent(clazz, AnnotationMeta::new).findAnnotations(annotationType);
   }
 
   /**
@@ -76,23 +122,7 @@ public class AnnotationUtil {
    * Find all the annotations for the filter searching meta-annotations.
    */
   public static Set<Annotation> metaFindAllFor(AnnotatedElement element, Set<Class<?>> filter) {
-    Set<Annotation> visited = new HashSet<>();
-    Set<Annotation> result = new LinkedHashSet<>();
-    for (Annotation ann : element.getAnnotations()) {
-      metaAdd(ann, filter, visited, result);
-    }
-    return result;
+    return annotationCache.computeIfAbsent(element, AnnotationMeta::new).finaAllMetaAnnotations(filter);
   }
 
-  private static void metaAdd(Annotation ann, Set<Class<?>> filter, Set<Annotation> visited, Set<Annotation> result) {
-    if (notJavaLang(ann) && visited.add(ann)) {
-      if (filter.contains(ann.annotationType())) {
-        result.add(ann);
-      } else {
-        for (Annotation metaAnn : ann.annotationType().getAnnotations()) {
-          metaAdd(metaAnn, filter, visited, result);
-        }
-      }
-    }
-  }
 }
