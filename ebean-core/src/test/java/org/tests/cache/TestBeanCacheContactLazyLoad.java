@@ -3,6 +3,7 @@ package org.tests.cache;
 import io.ebean.BaseTestCase;
 import io.ebean.DB;
 import io.ebeantest.LoggedSql;
+import org.junit.After;
 import org.junit.Test;
 import org.tests.model.basic.Contact;
 import org.tests.model.basic.Customer;
@@ -17,6 +18,17 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Test class testing a wrong behaviour of the bean cache.
  */
 public class TestBeanCacheContactLazyLoad extends BaseTestCase {
+
+  @After
+  public void after() {
+    DB.update(Contact.class).where()
+      .eq("firstName", "Tim")
+      .eq("lastName", "Button")
+      .delete();
+    DB.update(Customer.class).where()
+      .eq("name", "Customer")
+      .delete();
+  }
 
   /**
    * This test shows a wrong behaviour of the bean cache up to at least Ebean 12.4.*:

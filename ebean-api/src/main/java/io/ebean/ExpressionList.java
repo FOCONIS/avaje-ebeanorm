@@ -39,7 +39,7 @@ import java.util.function.Predicate;
  *
  * @see Query#where()
  */
-public interface ExpressionList<T> {
+public interface ExpressionList<T> extends QueryDsl<T, ExpressionList<T>> {
 
   /**
    * Return the query that owns this expression list.
@@ -842,31 +842,9 @@ public interface ExpressionList<T> {
   ExpressionList<T> addAll(ExpressionList<T> exprList);
 
   /**
-   * Equal To - property is equal to a given value.
-   */
-  ExpressionList<T> eq(String propertyName, Object value);
-
-  /**
    * Equal To or Null - property is equal to a given value or null.
    */
   ExpressionList<T> eqOrNull(String propertyName, Object value);
-
-  /**
-   * Not Equal To - property not equal to the given value.
-   */
-  ExpressionList<T> ne(String propertyName, Object value);
-
-  /**
-   * Case Insensitive Equal To - property equal to the given value (typically
-   * using a lower() function to make it case insensitive).
-   */
-  ExpressionList<T> ieq(String propertyName, String value);
-
-  /**
-   * Case Insensitive Not Equal To - property not equal to the given value (typically
-   * using a lower() function to make it case insensitive).
-   */
-  ExpressionList<T> ine(String propertyName, String value);
 
   /**
    * Value in Range between 2 properties.
@@ -888,27 +866,9 @@ public interface ExpressionList<T> {
   ExpressionList<T> inRangeWith(String lowProperty, String highProperty, Object value);
 
   /**
-   * In Range - {@code property >= value1 and property < value2}.
-   * <p>
-   * Unlike Between inRange is "half open" and usually more useful for use with dates or timestamps.
-   * </p>
-   */
-  ExpressionList<T> inRange(String propertyName, Object value1, Object value2);
-
-  /**
-   * Between - property between the two given values.
-   */
-  ExpressionList<T> between(String propertyName, Object value1, Object value2);
-
-  /**
    * Between - value between the two properties.
    */
   ExpressionList<T> betweenProperties(String lowProperty, String highProperty, Object value);
-
-  /**
-   * Greater Than - property greater than the given value.
-   */
-  ExpressionList<T> gt(String propertyName, Object value);
 
   /**
    * Greater Than or Null - property greater than the given value or null.
@@ -921,17 +881,6 @@ public interface ExpressionList<T> {
   ExpressionList<T> geOrNull(String propertyName, Object value);
 
   /**
-   * Greater Than or Equal to - property greater than or equal to the given
-   * value.
-   */
-  ExpressionList<T> ge(String propertyName, Object value);
-
-  /**
-   * Less Than - property less than the given value.
-   */
-  ExpressionList<T> lt(String propertyName, Object value);
-
-  /**
    * Less Than or Null - property less than the given value or null.
    */
   ExpressionList<T> ltOrNull(String propertyName, Object value);
@@ -940,21 +889,6 @@ public interface ExpressionList<T> {
    * Less Than or Equal to OR Null - ({@code <= or null }).
    */
   ExpressionList<T> leOrNull(String propertyName, Object value);
-
-  /**
-   * Less Than or Equal to - property less than or equal to the given value.
-   */
-  ExpressionList<T> le(String propertyName, Object value);
-
-  /**
-   * Is Null - property is null.
-   */
-  ExpressionList<T> isNull(String propertyName);
-
-  /**
-   * Is Not Null - property is not null.
-   */
-  ExpressionList<T> isNotNull(String propertyName);
 
   /**
    * A "Query By Example" type of expression.
@@ -1008,72 +942,6 @@ public interface ExpressionList<T> {
   ExpressionList<T> iexampleLike(Object example);
 
   /**
-   * Like - property like value where the value contains the SQL wild card
-   * characters % (percentage) and _ (underscore).
-   */
-  ExpressionList<T> like(String propertyName, String value);
-
-  /**
-   * Case insensitive Like - property like value where the value contains the
-   * SQL wild card characters % (percentage) and _ (underscore). Typically uses
-   * a lower() function to make the expression case insensitive.
-   */
-  ExpressionList<T> ilike(String propertyName, String value);
-
-  /**
-   * Starts With - property like value%.
-   */
-  ExpressionList<T> startsWith(String propertyName, String value);
-
-  /**
-   * Case insensitive Starts With - property like value%. Typically uses a
-   * lower() function to make the expression case insensitive.
-   */
-  ExpressionList<T> istartsWith(String propertyName, String value);
-
-  /**
-   * Ends With - property like %value.
-   */
-  ExpressionList<T> endsWith(String propertyName, String value);
-
-  /**
-   * Case insensitive Ends With - property like %value. Typically uses a lower()
-   * function to make the expression case insensitive.
-   */
-  ExpressionList<T> iendsWith(String propertyName, String value);
-
-  /**
-   * Contains - property like %value%.
-   */
-  ExpressionList<T> contains(String propertyName, String value);
-
-  /**
-   * Case insensitive Contains - property like %value%. Typically uses a lower()
-   * function to make the expression case insensitive.
-   */
-  ExpressionList<T> icontains(String propertyName, String value);
-
-  /**
-   * In expression using pairs of value objects.
-   */
-  ExpressionList<T> inPairs(Pairs pairs);
-
-  /**
-   * In - using a subQuery.
-   */
-  ExpressionList<T> in(String propertyName, Query<?> subQuery);
-
-  /**
-   * In - property has a value in the array of values.
-   */
-  ExpressionList<T> in(String propertyName, Object... values);
-
-  /**
-   * In - property has a value in the collection of values.
-   */
-  ExpressionList<T> in(String propertyName, Collection<?> values);
-
-  /**
    * In where null or empty values means that no predicate is added to the query.
    * <p>
    * That is, only add the IN predicate if the values are not null or empty.
@@ -1107,51 +975,6 @@ public interface ExpressionList<T> {
    * }</pre>
    */
   ExpressionList<T> inOrEmpty(String propertyName, Collection<?> values);
-
-  /**
-   * In - using a subQuery.
-   * <p>
-   * This is exactly the same as in() and provided due to "in" being a Kotlin keyword
-   * (and hence to avoid the slightly ugly escaping when using in() in Kotlin)
-   */
-  default ExpressionList<T> isIn(String propertyName, Query<?> subQuery) {
-    return in(propertyName, subQuery);
-  }
-
-  /**
-   * In - property has a value in the array of values.
-   * <p>
-   * This is exactly the same as in() and provided due to "in" being a Kotlin keyword
-   * (and hence to avoid the slightly ugly escaping when using in() in Kotlin)
-   */
-  default ExpressionList<T> isIn(String propertyName, Object... values) {
-    return in(propertyName, values);
-  }
-
-  /**
-   * In - property has a value in the collection of values.
-   * <p>
-   * This is exactly the same as in() and provided due to "in" being a Kotlin keyword
-   * (and hence to avoid the slightly ugly escaping when using in() in Kotlin)
-   */
-  default ExpressionList<T> isIn(String propertyName, Collection<?> values) {
-    return in(propertyName, values);
-  }
-
-  /**
-   * Not In - property has a value in the array of values.
-   */
-  ExpressionList<T> notIn(String propertyName, Object... values);
-
-  /**
-   * Not In - property has a value in the collection of values.
-   */
-  ExpressionList<T> notIn(String propertyName, Collection<?> values);
-
-  /**
-   * Not In - using a subQuery.
-   */
-  ExpressionList<T> notIn(String propertyName, Query<?> subQuery);
 
   /**
    * Is empty expression for collection properties.
@@ -1189,17 +1012,6 @@ public interface ExpressionList<T> {
   ExpressionList<T> idEq(Object value);
 
   /**
-   * All Equal - Map containing property names and their values.
-   * <p>
-   * Expression where all the property names in the map are equal to the
-   * corresponding value.
-   * </p>
-   *
-   * @param propertyMap a map keyed by property names.
-   */
-  ExpressionList<T> allEq(Map<String, Object> propertyMap);
-
-  /**
    * Array property contains entries with the given values.
    */
   ExpressionList<T> arrayContains(String propertyName, Object... values);
@@ -1227,65 +1039,6 @@ public interface ExpressionList<T> {
    * </p>
    */
   ExpressionList<T> arrayIsNotEmpty(String propertyName);
-
-  /**
-   * Add expression for ANY of the given bit flags to be set.
-   * <pre>{@code
-   *
-   * where().bitwiseAny("flags", BwFlags.HAS_BULK + BwFlags.HAS_COLOUR)
-   *
-   * }</pre>
-   *
-   * @param propertyName The property that holds the flags value
-   * @param flags        The flags we are looking for
-   */
-  ExpressionList<T> bitwiseAny(String propertyName, long flags);
-
-  /**
-   * Add expression for ALL of the given bit flags to be set.
-   * <pre>{@code
-   *
-   * where().bitwiseAll("flags", BwFlags.HAS_BULK + BwFlags.HAS_COLOUR)
-   *
-   * }</pre>
-   *
-   * @param propertyName The property that holds the flags value
-   * @param flags        The flags we are looking for
-   */
-  ExpressionList<T> bitwiseAll(String propertyName, long flags);
-
-  /**
-   * Add expression for the given bit flags to be NOT set.
-   * <pre>{@code
-   *
-   * where().bitwiseNot("flags", BwFlags.HAS_COLOUR)
-   *
-   * }</pre>
-   *
-   * @param propertyName The property that holds the flags value
-   * @param flags        The flags we are looking for
-   */
-  ExpressionList<T> bitwiseNot(String propertyName, long flags);
-
-  /**
-   * Add bitwise AND expression of the given bit flags to compare with the match/mask.
-   * <p>
-   * <pre>{@code
-   *
-   * // Flags Bulk + Size = Size
-   * // ... meaning Bulk is not set and Size is set
-   *
-   * long selectedFlags = BwFlags.HAS_BULK + BwFlags.HAS_SIZE;
-   * long mask = BwFlags.HAS_SIZE; // Only Size flag set
-   *
-   * where().bitwiseAnd("flags", selectedFlags, mask)
-   *
-   * }</pre>
-   *
-   * @param propertyName The property that holds the flags value
-   * @param flags        The flags we are looking for
-   */
-  ExpressionList<T> bitwiseAnd(String propertyName, long flags, long match);
 
   /**
    * Add raw expression with a single parameter.
@@ -1491,117 +1244,6 @@ public interface ExpressionList<T> {
   ExpressionList<T> not(Expression exp);
 
   /**
-   * Start a list of expressions that will be joined by AND's
-   * returning the expression list the expressions are added to.
-   * <p>
-   * This is exactly the same as conjunction();
-   * </p>
-   * <p>
-   * Use endAnd() or endJunction() to end the AND junction.
-   * </p>
-   * <p>
-   * Note that a where() clause defaults to an AND junction so
-   * typically you only explicitly need to use the and() junction
-   * when it is nested inside an or() or not() junction.
-   * </p>
-   * <pre>{@code
-   *
-   *  // Example: Nested and()
-   *
-   *    .where()
-   *    .or()
-   *      .and() // nested and
-   *        .startsWith("name", "r")
-   *        .eq("anniversary", onAfter)
-   *        .endAnd()
-   *      .and()
-   *        .eq("status", Customer.Status.ACTIVE)
-   *        .gt("id", 0)
-   *        .endAnd()
-   *      .order().asc("name")
-   *      .findList();
-   * }</pre>
-   */
-  Junction<T> and();
-
-  /**
-   * Return a list of expressions that will be joined by OR's.
-   * This is exactly the same as disjunction();
-   * <p>
-   * Use endOr() or endJunction() to end the OR junction.
-   * </p>
-   *
-   * <pre>{@code
-   *
-   *  // Example: (status active OR anniversary is null)
-   *
-   *    .where()
-   *    .or()
-   *      .eq("status", Customer.Status.ACTIVE)
-   *      .isNull("anniversary")
-   *    .order().asc("name")
-   *    .findList();
-   *
-   * }</pre>
-   *
-   * <pre>{@code
-   *
-   *  // Example: Use or() to join
-   *  // two nested and() expressions
-   *
-   *    .where()
-   *    .or()
-   *      .and()
-   *        .startsWith("name", "r")
-   *        .eq("anniversary", onAfter)
-   *        .endAnd()
-   *      .and()
-   *        .eq("status", Customer.Status.ACTIVE)
-   *        .gt("id", 0)
-   *        .endAnd()
-   *      .order().asc("name")
-   *      .findList();
-   *
-   * }</pre>
-   */
-  Junction<T> or();
-
-  /**
-   * Return a list of expressions that will be wrapped by NOT.
-   * <p>
-   * Use endNot() or endJunction() to end expressions being added to the
-   * NOT expression list.
-   * </p>
-   *
-   * <pre>{@code
-   *
-   *    .where()
-   *      .not()
-   *        .gt("id", 1)
-   *        .eq("anniversary", onAfter)
-   *        .endNot()
-   *
-   * }</pre>
-   *
-   * <pre>{@code
-   *
-   * // Example: nested not()
-   *
-   *   .where()
-   *     .eq("status", Customer.Status.ACTIVE)
-   *     .not()
-   *       .gt("id", 1)
-   *       .eq("anniversary", onAfter)
-   *       .endNot()
-   *     .order()
-   *       .asc("name")
-   *     .findList();
-   *
-   * }</pre>
-   */
-  Junction<T> not();
-
-  /**
    * Start (and return) a list of expressions that will be joined by AND's.
    * <p>
    * This is the same as and().
@@ -1664,20 +1306,5 @@ public interface ExpressionList<T> {
    * </p>
    */
   ExpressionList<T> endJunction();
-
-  /**
-   * End a AND junction - synonym for endJunction().
-   */
-  ExpressionList<T> endAnd();
-
-  /**
-   * End a AND junction - synonym for endJunction().
-   */
-  ExpressionList<T> endOr();
-
-  /**
-   * End a NOT junction - synonym for endJunction().
-   */
-  ExpressionList<T> endNot();
 
 }

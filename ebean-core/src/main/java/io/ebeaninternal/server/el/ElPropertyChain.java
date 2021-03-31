@@ -6,9 +6,15 @@ import io.ebean.plugin.Property;
 import io.ebean.text.StringParser;
 import io.ebean.util.SplitName;
 import io.ebeaninternal.api.SpiExpressionRequest;
+import io.ebeaninternal.api.filter.Expression3VL;
+import io.ebeaninternal.api.filter.ExpressionTest;
+import io.ebeaninternal.api.filter.FilterContext;
+import io.ebeaninternal.api.filter.FilterPermutations;
 import io.ebeaninternal.server.deploy.BeanProperty;
+import io.ebeaninternal.server.deploy.BeanPropertyAssocMany;
 
 import java.util.Arrays;
+import java.util.Collection;
 
 
 /**
@@ -307,6 +313,40 @@ public class ElPropertyChain implements ElPropertyValue {
         // a non-scalar property of a Compound value object
         lastElPropertyValue.pathSet(prevBean, value);
       }
+    }
+  }
+
+  @Override
+  public Expression3VL pathTest(Object bean, FilterContext ctx, ExpressionTest test) {
+
+    FilterPermutations permValue = null;
+
+    for (int i = 0; i < last; i++) {
+      ElPropertyValue prop = chain[i];
+
+      bean = prop.pathGet(bean);
+      if (bean == null) {
+        return test.testNull();
+      }
+      if (prop instanceof BeanPropertyAssocMany) {
+        // here we get all permutations, see FilterContext for explanation
+        Collection<?> coll = (Collection<?>) bean;
+        if (coll.isEmpty()) {
+          return test.testNull();
+        }
+        if (permValue == null) {
+          permValue = ctx.getFilterPermutations(prop.getName(), coll);
+        } else {
+          permValue = permValue.traverse(prop.getName(), coll);
+        }
+        bean = permValue.getCurrentValue();
+      }
+    }
+    bean = lastElPropertyValue.pathGet(bean);
+    if (bean == null) {
+      return test.testNull();
+    } else {
+      return test.test(bean);
     }
   }
 

@@ -37,6 +37,9 @@ public class TestCreateEntityBean extends BaseTestCase {
     assertNotNull(beanCreateEntityBeanDb.geteSimple());
     assertEquals("Default prop eSimple", beanCreateEntityBeanDb.geteSimple().getName());
 
+    Ebean.delete(beanCreateEntityBean);
+    Ebean.delete(beanNew);
+
   }
 
 }
