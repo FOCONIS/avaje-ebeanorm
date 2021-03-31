@@ -1,17 +1,16 @@
 package io.ebean.filter;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.List;
-
 import io.ebean.DB;
+import io.ebean.Filter;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tests.model.basic.Order;
 import org.tests.model.basic.ResetBasicData;
 
-import io.ebean.Ebean;
-import io.ebean.Filter;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestFilter {
 
@@ -91,6 +90,29 @@ public class TestFilter {
 
     Assert.assertNotNull(newOrders);
     assertThat(newOrders).hasSize(2);
+  }
+
+  @Test
+  public void test_iContains() {
+    ResetBasicData.reset();
+
+    Order testOrder = new Order();
+    testOrder.setCustomerName("Thomas Maier");
+
+    Order testOrder2 = new Order();
+    testOrder2.setCustomerName("Thomas Rob");
+
+    Filter<Order> filter = DB.filter(Order.class);
+    List<Order> orders = filter.icontains("customerName", "R").filter(Arrays.asList(testOrder, testOrder2));
+    assertThat(orders).hasSize(2);
+
+    Filter<Order> filter2 = DB.filter(Order.class);
+    List<Order> orders2 = filter2.icontains("customerName", "Rob").filter(Arrays.asList(testOrder, testOrder2));
+    assertThat(orders2).hasSize(1);
+
+    Filter<Order> filter3 = DB.filter(Order.class);
+    List<Order> orders3 = filter3.icontains("customerName", "").filter(Arrays.asList(testOrder, testOrder2));
+    assertThat(orders3).hasSize(2);
   }
 
 }
