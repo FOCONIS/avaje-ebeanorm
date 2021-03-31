@@ -1,13 +1,10 @@
 package org.tests.query;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
-
+import io.ebean.BaseTestCase;
+import io.ebean.Ebean;
+import io.ebean.Filter;
+import io.ebean.Query;
+import io.ebean.QueryDsl;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,11 +12,11 @@ import org.tests.model.basic.Customer;
 import org.tests.model.basic.Order;
 import org.tests.model.basic.ResetBasicData;
 
-import io.ebean.BaseTestCase;
-import io.ebean.Ebean;
-import io.ebean.Filter;
-import io.ebean.Query;
-import io.ebean.QueryDsl;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * Test the in memory filtering.
@@ -202,7 +199,7 @@ public class TestInMemoryQuery extends BaseTestCase {
   }
 
   @Test
-  public void testIn() throws Exception {
+  public void testIn()  {
 
     testQuery(condition -> {
       condition.in("status", Customer.Status.NEW);
@@ -223,7 +220,7 @@ public class TestInMemoryQuery extends BaseTestCase {
   }
 
   @Test
-  public void testInSubQuery() throws Exception {
+  public void testInSubQuery()  {
 
     Query<Order> shippedOrders = Ebean.find(Order.class)
         .select("id") // = 1,4,5
@@ -247,7 +244,7 @@ public class TestInMemoryQuery extends BaseTestCase {
   }
 
   @Test
-  public void testAllEq() throws Exception {
+  public void testAllEq()  {
     Map<String, Object> map1 = new HashMap<>();
     map1.put("contacts.firstName", "Tracy");
     map1.put("contacts.lastName", "Red");
@@ -279,7 +276,7 @@ public class TestInMemoryQuery extends BaseTestCase {
   }
 
   @Test
-  public void testAnd() throws Exception {
+  public void testAnd()  {
     testQuery(condition -> {
       condition.and().eq("contacts.lastName", "Blue").endAnd();
     }, rob, fiona, nocCust);
@@ -307,7 +304,7 @@ public class TestInMemoryQuery extends BaseTestCase {
   }
 
   @Test
-  public void testOr() throws Exception {
+  public void testOr()  {
     testQuery(condition -> {
       condition.or() //
           .eq("contacts.lastName", "Blue") //
@@ -351,7 +348,7 @@ public class TestInMemoryQuery extends BaseTestCase {
   }
 
   @Test
-  public void testComplex() throws Exception {
+  public void testComplex()  {
     testQuery(condition -> {
       condition.or() //
           .eq("orders.details.product.name", "x1") //
@@ -364,7 +361,7 @@ public class TestInMemoryQuery extends BaseTestCase {
   }
 
   @Test
-  public void testNot() throws Exception {
+  public void testNot()  {
     testQuery(condition -> {
       condition.not() //
           .eq("billingAddress.line1", "P.O.Box 1234") //
@@ -384,6 +381,77 @@ public class TestInMemoryQuery extends BaseTestCase {
           .endNot();
     }, fiona, nocCust);
 
+  }
+
+  @Test
+  public void testStartsWithNonStringType()  {
+    testQuery(condition -> {
+      condition.startsWith("anniversary", "20");
+    }, rob, fiona, nocCust);
+  }
+
+  @Test
+  public void testContainsNonStringType()  {
+    testQuery(condition -> {
+      condition.contains("anniversary", "2");
+    }, rob, fiona, nocCust);
+  }
+
+  @Test
+  public void testEndsWithNonStringType()  {
+    testQuery(condition -> {
+      condition.endsWith("anniversary", "1");
+    }, fiona);
+  }
+
+
+  @Test
+  public void testStartsWithNonStringTypeInsensitive()  {
+    testQuery(condition -> {
+      condition.icontains("anniversary", "20");
+    }, rob, fiona, nocCust);
+  }
+
+  @Test
+  public void testContainsNonStringTypeInsensitive()  {
+    testQuery(condition -> {
+      condition.icontains("anniversary", "2");
+    }, rob, fiona, nocCust);
+  }
+
+  @Test
+  public void testEndsWithNonStringTypeInsensitive()  {
+    testQuery(condition -> {
+      condition.iendsWith("anniversary", "1");
+    }, fiona);
+  }
+
+  @Test
+  public void testLike()  {
+    testQuery(condition -> {
+      condition.like("name", "F_o%");
+    }, fiona);
+  }
+
+  @Test
+  public void testLikeInsensitive()  {
+    testQuery(condition -> {
+      condition.ilike("name", "f_O%");
+    }, fiona);
+  }
+
+  @Test
+  public void testLikeNonStringType()  {
+    testQuery(condition -> {
+      condition.like("anniversary", "2%");
+    }, rob, fiona, nocCust);
+  }
+
+  @Test
+  public void testLikeNonStringTypeInsensitive()  {
+    testQuery(condition -> {
+      condition.ilike("anniversary", "2%");
+    }, rob, fiona, nocCust);
   }
 
   private <T> void testQuery(Consumer<QueryDsl<Customer,?>> condition, Customer... expected) {
