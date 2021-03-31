@@ -73,10 +73,9 @@ public final class ElFilter<T> implements Filter<T> {
         beanDescriptor.sort(list, sortByClause);
       }
 
-      DefaultFilterContext ctx = new DefaultFilterContext();
       int count = 0;
       for (T t : list) {
-        if (root.isMatchAnyPermuation(t, ctx)) {
+        if (root.matcher().match(t)) {
           count++;
           if (count > firstRow) {
             filterList.add(t);
@@ -85,16 +84,13 @@ public final class ElFilter<T> implements Filter<T> {
             }
           }
         }
-        ctx.reset();
       }
     } else {
       // no LIMIT clause, so let's filter and then sort
-      DefaultFilterContext ctx = new DefaultFilterContext();
       for (T t : list) {
-        if (root.isMatchAnyPermuation(t, ctx)) {
+        if (root.matcher().match(t)) {
           filterList.add(t);
         }
-        ctx.reset();
       }
       if (sortByClause != null) {
         beanDescriptor.sort(filterList, sortByClause);
@@ -147,8 +143,7 @@ public final class ElFilter<T> implements Filter<T> {
 
   @Override
   public Matcher<T> matcher() {
-    DefaultFilterContext ctx = new DefaultFilterContext();
-    return bean -> root.isMatchAnyPermuation(bean, ctx);
+    return bean -> root.isMatchAnyPermutation(bean);
   }
 
   public Expression3VL isMatch(T bean, FilterContext ctx) {

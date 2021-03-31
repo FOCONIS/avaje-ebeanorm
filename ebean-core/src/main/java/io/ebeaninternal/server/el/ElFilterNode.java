@@ -127,7 +127,8 @@ class ElFilterNode<T> implements Filter<T>, ElMatcher<T> {
     return this;
   }
 
-  protected boolean isMatchAnyPermuation(T bean, DefaultFilterContext ctx) {
+  protected boolean isMatchAnyPermutation(T bean) {
+    DefaultFilterContext ctx = new DefaultFilterContext();
     do {
       if (isMatch(bean, ctx) == Expression3VL.TRUE) {
         return true;
