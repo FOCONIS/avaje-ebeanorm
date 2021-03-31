@@ -13,6 +13,8 @@ import io.ebeaninternal.api.filter.Expression3VL;
 import io.ebeaninternal.api.filter.ExpressionTest;
 import io.ebeaninternal.api.filter.FilterContext;
 
+import javax.annotation.Nonnull;
+
 
 /**
  * Contains the various ElMatcher implementations.
@@ -441,6 +443,11 @@ class ElMatchBuilder {
     @Override
     public boolean match(Object value) {
       return true;
+    }
+
+    @Override
+    public Expression3VL testNull() {
+      return Expression3VL.FALSE;
     }
 
     @Override
