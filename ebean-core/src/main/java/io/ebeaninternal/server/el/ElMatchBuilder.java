@@ -547,7 +547,8 @@ class ElMatchBuilder {
    */
   static class InQuery<T, V> extends Base<T, V> {
 
-    private Query<?> query;
+    private final Query<?> query;
+    private final String sqString;
 
     private class Tester implements ExpressionTest {
       final Set<V> set = new HashSet<>(query.findSingleAttributeList());
@@ -563,6 +564,7 @@ class ElMatchBuilder {
     public InQuery(ElPropertyValue elGetValue, Query<?> query) {
       super(elGetValue);
       this.query = query;
+      this.sqString = String.valueOf(System.identityHashCode(query));
     }
 
     @Override
@@ -578,7 +580,7 @@ class ElMatchBuilder {
 
     @Override
     public void toString(StringBuilder sb) {
-      sb.append(elGetValue).append(" in [").append(query).append(']');
+      sb.append(elGetValue).append(" in [").append(sqString).append(']');
     }
     @Override
     public <F extends QueryDsl<T, F>> void visitDsl(QueryDsl<T, F> target) {
@@ -590,10 +592,12 @@ class ElMatchBuilder {
 
     private final Query<?> query;
     private final boolean exists;
+    private final String sqString;
 
     public Exists(boolean exists, Query<?> query) {
       this.exists = exists;
       this.query = query;
+      this.sqString = String.valueOf(System.identityHashCode(query));
     }
 
     @Override
@@ -603,7 +607,10 @@ class ElMatchBuilder {
 
     @Override
     public void toString(final StringBuilder sb) {
-      sb.append(" exists [").append(query).append(']');
+      if (!exists) {
+        sb.append(" not");
+      }
+      sb.append(" exists [").append(sqString).append(']');
     }
 
     @Override
