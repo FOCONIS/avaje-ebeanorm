@@ -1,10 +1,10 @@
 package org.tests.query;
 
 import io.ebean.BaseTestCase;
+import io.ebean.DB;
 import io.ebean.Ebean;
 import io.ebean.Query;
 import io.ebeantest.LoggedSql;
-
 import org.junit.Test;
 import org.tests.model.basic.Customer;
 import org.tests.model.basic.Order;
@@ -97,6 +97,28 @@ public class TestQueryExists extends BaseTestCase {
     String sql = query.getGeneratedSql();
 
     assertThat(sql).contains("exists (");
+  }
+
+  @Test
+  public void test_exists() {
+    ResetBasicData.reset();
+
+    Query<Order> subQuery = DB.find(Order.class).alias("o0").select("id").where()
+      .eq("status", Order.Status.NEW)
+      .raw("o0.id = o1.id")
+      .query();
+    Query<Order> query = DB.find(Order.class).alias("o1").select("id").where().exists(subQuery).query();
+
+    final Query<Order> finalQuery = DB.find(Order.class).alias("o1");
+    query.where().applyTo(finalQuery.where());
+
+    final List<Order> customers = finalQuery.findList();
+
+    assertThat(customers)
+      .hasSize(3)
+      .allSatisfy(order ->
+        assertThat(order.getStatus()).isEqualTo(Order.Status.NEW)
+      );
   }
 
   @Test

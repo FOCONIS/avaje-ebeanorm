@@ -1,10 +1,13 @@
 package io.ebean.filter;
 
 import io.ebean.DB;
+import io.ebean.Ebean;
 import io.ebean.Filter;
+import io.ebean.Query;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runners.Parameterized;
+import org.tests.model.basic.Customer;
 import org.tests.model.basic.Order;
 import org.tests.model.basic.ResetBasicData;
 
