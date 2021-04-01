@@ -4,6 +4,7 @@ import io.ebean.DB;
 import io.ebean.Filter;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runners.Parameterized;
 import org.tests.model.basic.Order;
 import org.tests.model.basic.ResetBasicData;
 
@@ -21,10 +22,10 @@ public class TestFilter {
 
     List<Order> allOrders = DB.find(Order.class).findList();
 
-    Filter<Order> filter = DB.filter(Order.class);
-    List<Order> newOrders = filter.eq("status", Order.Status.NEW).filter(allOrders);
+    List<Order> newOrders = DB.filter(Order.class)
+      .eq("status", Order.Status.NEW)
+      .filter(allOrders);
 
-    Assert.assertNotNull(newOrders);
     assertThat(newOrders).hasSize(3);
   }
 
@@ -37,10 +38,10 @@ public class TestFilter {
     allOrders.get(0).setCustomer(null);
     allOrders.get(1).setCustomer(null);
 
-    Filter<Order> filter = DB.filter(Order.class);
-    List<Order> newOrders = filter.isNull("customer").filter(allOrders);
+    List<Order> newOrders = DB.filter(Order.class)
+      .isNull("customer")
+      .filter(allOrders);
 
-    Assert.assertNotNull(newOrders);
     assertThat(newOrders).hasSize(2);
   }
 
@@ -53,10 +54,10 @@ public class TestFilter {
     allOrders.get(0).setCustomer(null);
     allOrders.get(1).setCustomer(null);
 
-    Filter<Order> filter = DB.filter(Order.class);
-    List<Order> newOrders = filter.isNotNull("customer").filter(allOrders);
+    List<Order> newOrders = DB.filter(Order.class)
+      .isNotNull("customer")
+      .filter(allOrders);
 
-    Assert.assertNotNull(newOrders);
     assertThat(newOrders).hasSize(3);
   }
 
@@ -69,10 +70,10 @@ public class TestFilter {
     allOrders.get(0).setCustomer(null);
     allOrders.get(1).setCustomer(null);
 
-    Filter<Order> filter = DB.filter(Order.class);
-    List<Order> newOrders = filter.not().isNull("customer").filter(allOrders);
+    List<Order> newOrders = DB.filter(Order.class)
+      .not().isNull("customer")
+      .filter(allOrders);
 
-    Assert.assertNotNull(newOrders);
     assertThat(newOrders).hasSize(3);
   }
 
@@ -85,34 +86,207 @@ public class TestFilter {
     allOrders.get(0).setCustomer(null);
     allOrders.get(1).setCustomer(null);
 
-    Filter<Order> filter = DB.filter(Order.class);
-    List<Order> newOrders = filter.not().isNotNull("customer").filter(allOrders);
+    List<Order> newOrders = DB.filter(Order.class)
+      .not().isNotNull("customer")
+      .filter(allOrders);
 
-    Assert.assertNotNull(newOrders);
-    assertThat(newOrders).hasSize(2);
+    assertThat(newOrders)      .hasSize(2);
   }
 
   @Test
-  public void test_iContains() {
+  public void test_istartswith() {
     ResetBasicData.reset();
 
     Order testOrder = new Order();
-    testOrder.setCustomerName("Thomas Maier");
+    testOrder.setCustomerName("Tom Werb");
 
     Order testOrder2 = new Order();
     testOrder2.setCustomerName("Thomas Rob");
 
-    Filter<Order> filter = DB.filter(Order.class);
-    List<Order> orders = filter.icontains("customerName", "R").filter(Arrays.asList(testOrder, testOrder2));
+    List<Order> orders = DB.filter(Order.class)
+      .icontains("customerName", "T")
+      .filter(Arrays.asList(testOrder, testOrder2));
     assertThat(orders).hasSize(2);
 
-    Filter<Order> filter2 = DB.filter(Order.class);
-    List<Order> orders2 = filter2.icontains("customerName", "Rob").filter(Arrays.asList(testOrder, testOrder2));
+    List<Order> orders2 = DB.filter(Order.class)
+      .icontains("customerName", "Tom")
+      .filter(Arrays.asList(testOrder, testOrder2));
     assertThat(orders2).hasSize(1);
 
-    Filter<Order> filter3 = DB.filter(Order.class);
-    List<Order> orders3 = filter3.icontains("customerName", "").filter(Arrays.asList(testOrder, testOrder2));
+    List<Order> orders3 = DB.filter(Order.class)
+      .icontains("customerName", "")
+      .filter(Arrays.asList(testOrder, testOrder2));
     assertThat(orders3).hasSize(2);
   }
 
+  @Test
+  public void test_istartswith_with_linebreak() {
+    ResetBasicData.reset();
+
+    Order testOrder = new Order();
+    testOrder.setCustomerName("Tom \n Werb");
+
+    Order testOrder2 = new Order();
+    testOrder2.setCustomerName("Thomas \n Rob");
+
+    List<Order> orders = DB.filter(Order.class)
+      .icontains("customerName", "T")
+      .filter(Arrays.asList(testOrder, testOrder2));
+    assertThat(orders).hasSize(2);
+
+    List<Order> orders2 = DB.filter(Order.class)
+      .icontains("customerName", "Tom")
+      .filter(Arrays.asList(testOrder, testOrder2));
+    assertThat(orders2).hasSize(1);
+
+    List<Order> orders3 = DB.filter(Order.class)
+      .icontains("customerName", "")
+      .filter(Arrays.asList(testOrder, testOrder2));
+    assertThat(orders3).hasSize(2);
+  }
+
+  @Test
+  public void test_icontains() {
+    ResetBasicData.reset();
+
+    Order testOrder = new Order();
+    testOrder.setCustomerName("Tom Werb");
+
+    Order testOrder2 = new Order();
+    testOrder2.setCustomerName("Thomas Rob");
+
+    List<Order> orders = DB.filter(Order.class)
+      .icontains("customerName", "R")
+      .filter(Arrays.asList(testOrder, testOrder2));
+    assertThat(orders).hasSize(2);
+
+    List<Order> orders2 = DB.filter(Order.class)
+      .icontains("customerName", "Rob")
+      .filter(Arrays.asList(testOrder, testOrder2));
+    assertThat(orders2).hasSize(1);
+
+    List<Order> orders3 = DB.filter(Order.class)
+      .icontains("customerName", "")
+      .filter(Arrays.asList(testOrder, testOrder2));
+    assertThat(orders3).hasSize(2);
+  }
+  @Test
+  public void test_icontains_with_linebreak() {
+    ResetBasicData.reset();
+
+    Order testOrder = new Order();
+    testOrder.setCustomerName("Tom \n Werb");
+
+    Order testOrder2 = new Order();
+    testOrder2.setCustomerName("Thomas \n Rob");
+
+    List<Order> orders = DB.filter(Order.class)
+      .icontains("customerName", "R")
+      .filter(Arrays.asList(testOrder, testOrder2));
+    assertThat(orders).hasSize(2);
+
+    List<Order> orders2 = DB.filter(Order.class)
+      .icontains("customerName", "Rob")
+      .filter(Arrays.asList(testOrder, testOrder2));
+    assertThat(orders2).hasSize(1);
+
+    List<Order> orders3 = DB.filter(Order.class)
+      .icontains("customerName", "")
+      .filter(Arrays.asList(testOrder, testOrder2));
+    assertThat(orders3).hasSize(2);
+  }
+
+  @Test
+  public void test_iendswith() {
+    ResetBasicData.reset();
+
+    Order testOrder = new Order();
+    testOrder.setCustomerName("Tom Werb");
+
+    Order testOrder2 = new Order();
+    testOrder2.setCustomerName("Thomas Rob");
+
+    List<Order> orders = DB.filter(Order.class)
+      .icontains("customerName", "b")
+      .filter(Arrays.asList(testOrder, testOrder2));
+    assertThat(orders).hasSize(2);
+
+    List<Order> orders2 = DB.filter(Order.class)
+      .icontains("customerName", "Rob")
+      .filter(Arrays.asList(testOrder, testOrder2));
+    assertThat(orders2).hasSize(1);
+
+    List<Order> orders3 = DB.filter(Order.class)
+      .icontains("customerName", "")
+      .filter(Arrays.asList(testOrder, testOrder2));
+    assertThat(orders3).hasSize(2);
+  }
+
+  @Test
+  public void test_iendswith_with_linebreak() {
+    ResetBasicData.reset();
+
+    Order testOrder = new Order();
+    testOrder.setCustomerName("Tom \n Werb");
+
+    Order testOrder2 = new Order();
+    testOrder2.setCustomerName("Thomas \n Rob");
+
+    List<Order> orders = DB.filter(Order.class)
+      .icontains("customerName", "b")
+      .filter(Arrays.asList(testOrder, testOrder2));
+    assertThat(orders).hasSize(2);
+
+    List<Order> orders2 = DB.filter(Order.class)
+      .icontains("customerName", "Rob")
+      .filter(Arrays.asList(testOrder, testOrder2));
+    assertThat(orders2).hasSize(1);
+
+    List<Order> orders3 = DB.filter(Order.class)
+      .icontains("customerName", "")
+      .filter(Arrays.asList(testOrder, testOrder2));
+    assertThat(orders3).hasSize(2);
+  }
+
+  @Test
+  public void test_ilike() {
+    ResetBasicData.reset();
+
+    Order testOrder = new Order();
+    testOrder.setCustomerName("Tom Werb");
+
+    Order testOrder2 = new Order();
+    testOrder2.setCustomerName("Thomas Rob");
+
+    List<Order> orders = DB.filter(Order.class)
+      .ilike("customerName", "%R%")
+      .filter(Arrays.asList(testOrder, testOrder2));
+    assertThat(orders).hasSize(2);
+
+    List<Order> orders2 = DB.filter(Order.class)
+      .ilike("customerName", "%Rob%")
+      .filter(Arrays.asList(testOrder, testOrder2));
+    assertThat(orders2).hasSize(1);
+  }
+
+  @Test
+  public void test_ilike_with_linebreak() {
+    ResetBasicData.reset();
+
+    Order testOrder = new Order();
+    testOrder.setCustomerName("Tom \n Werb");
+
+    Order testOrder2 = new Order();
+    testOrder2.setCustomerName("Thomas \n Rob");
+
+    List<Order> orders = DB.filter(Order.class)
+      .ilike("customerName", "%R%")
+      .filter(Arrays.asList(testOrder, testOrder2));
+    assertThat(orders).hasSize(2);
+
+    List<Order> orders2 = DB.filter(Order.class)
+      .ilike("customerName", "%Rob%")
+      .filter(Arrays.asList(testOrder, testOrder2));
+    assertThat(orders2).hasSize(1);
+  }
 }

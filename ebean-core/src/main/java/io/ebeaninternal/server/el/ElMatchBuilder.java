@@ -190,7 +190,7 @@ class ElMatchBuilder {
     }
 
     Like(ElPropertyValue elGetValue, String like, boolean ignoreCase) {
-      super(elGetValue, asPattern(like), ignoreCase ? Pattern.CASE_INSENSITIVE : 0);
+      super(elGetValue, asPattern(like), Pattern.DOTALL + (ignoreCase ? Pattern.CASE_INSENSITIVE : 0));
       this.like = like;
       this.ignoreCase = ignoreCase;
     }
