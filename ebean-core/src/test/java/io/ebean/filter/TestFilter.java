@@ -292,4 +292,28 @@ public class TestFilter {
       .filter(Arrays.asList(testOrder, testOrder2));
     assertThat(orders2).hasSize(1);
   }
+
+  @Test
+  public void test_filter_exists() {
+    ResetBasicData.reset();
+
+    Query<Order> trueSubQuery = DB.find(Order.class).alias("o0").select("id").where()
+      .raw("1=1")
+      .query();
+    final Filter<Order> trueFilter = DB.filter(Order.class).exists(trueSubQuery);
+
+    Query<Order> falseSubQuery = DB.find(Order.class).alias("o0").select("id").where()
+      .raw("1=0")
+      .query();
+    final Filter<Order> falseFilter = DB.filter(Order.class).exists(falseSubQuery);
+
+    final Query<Order> trueQuery = DB.find(Order.class);
+    trueFilter.applyTo(trueQuery.where());
+    assertThat(trueQuery.findCount()).isEqualTo(5);
+
+    final Query<Order> falseQuery = DB.find(Order.class);
+    falseFilter.applyTo(falseQuery.where());
+    assertThat(falseQuery.findCount()).isEqualTo(0);
+  }
+
 }

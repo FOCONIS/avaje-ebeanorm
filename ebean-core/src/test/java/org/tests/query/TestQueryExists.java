@@ -100,7 +100,7 @@ public class TestQueryExists extends BaseTestCase {
   }
 
   @Test
-  public void test_exists() {
+  public void testExistsApplyTo() {
     ResetBasicData.reset();
 
     Query<Order> subQuery = DB.find(Order.class).alias("o0").select("id").where()

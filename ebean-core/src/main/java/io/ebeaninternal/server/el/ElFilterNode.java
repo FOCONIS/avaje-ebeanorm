@@ -520,6 +520,18 @@ class ElFilterNode<T> implements Filter<T>, ElMatcher<T> {
   }
 
   @Override
+  public Filter<T> exists(Query<?> subQuery) {
+    matches.add(new ElMatchBuilder.Exists<>(true, subQuery));
+    return this;
+  }
+
+  @Override
+  public Filter<T> notExists(Query<?> subQuery) {
+    matches.add(new ElMatchBuilder.Exists<>(false, subQuery));
+    return this;
+  }
+
+  @Override
   public List<T> filter(List<T> list) {
     return elFilter.filter(list);
   }

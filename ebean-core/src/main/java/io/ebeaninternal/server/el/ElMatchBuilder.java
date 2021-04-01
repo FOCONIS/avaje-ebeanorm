@@ -586,6 +586,36 @@ class ElMatchBuilder {
     }
   }
 
+  static class Exists<T, V> implements ElMatcher<T> {
+
+    private final Query<?> query;
+    private final boolean exists;
+
+    public Exists(boolean exists, Query<?> query) {
+      this.exists = exists;
+      this.query = query;
+    }
+
+    @Override
+    public Expression3VL isMatch(final T bean, final FilterContext ctx) {
+      throw new UnsupportedOperationException("exists query are not for in memory");
+    }
+
+    @Override
+    public void toString(final StringBuilder sb) {
+      sb.append(" exists [").append(query).append(']');
+    }
+
+    @Override
+    public <F extends QueryDsl<T, F>> void visitDsl(final QueryDsl<T, F> target) {
+      if (exists) {
+        target.exists(query);
+      } else {
+        target.notExists(query);
+      }
+    }
+  }
+
   /**
    * Equal To.
    */
@@ -703,6 +733,7 @@ class ElMatchBuilder {
       target.inRange(elGetValue.getElName(), min, max);
     }
   }
+
   /**
    * Greater Than.
    */
