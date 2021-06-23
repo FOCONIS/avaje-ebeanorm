@@ -35,6 +35,8 @@ public final class TableJoin {
 
   private final PropertyForeignKey foreignKey;
 
+  private final String extraWhere;
+
   public TableJoin(DeployTableJoin deploy) {
     this(deploy, null);
   }
@@ -44,6 +46,7 @@ public final class TableJoin {
    */
   public TableJoin(DeployTableJoin deploy, PropertyForeignKey foreignKey) {
     this.foreignKey = foreignKey;
+    this.extraWhere = deploy.getExtraWhere();
     this.table = InternString.intern(deploy.getTable());
     this.type = deploy.getType();
     this.inheritInfo = deploy.getInheritInfo();
@@ -59,6 +62,7 @@ public final class TableJoin {
 
   private TableJoin(TableJoin source, String overrideColumn) {
     this.foreignKey = null;
+    this.extraWhere = source.extraWhere;
     this.table = source.table;
     this.type = source.type;
     this.inheritInfo = source.inheritInfo;
@@ -157,8 +161,7 @@ public final class TableJoin {
     String inheritance = inheritInfo != null ? inheritInfo.getWhere() : null;
 
     String joinLiteral = joinType.getLiteral(type);
-    ctx.addJoin(joinLiteral, table, columns(), a1, a2, inheritance);
-
+    ctx.addJoin(joinLiteral, table, columns(), a1, a2, inheritance, extraWhere);
     return joinType.autoToOuter(type);
   }
 
