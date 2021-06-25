@@ -1,5 +1,6 @@
 package io.ebeaninternal.server.query;
 
+import io.ebean.CancelableQuery;
 import io.ebean.util.JdbcClose;
 import io.ebeaninternal.api.SpiProfileTransactionEvent;
 import io.ebeaninternal.api.SpiQuery;
@@ -12,9 +13,9 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /**
- * Executes the delete query.
+ * Executes the update query.
  */
-class CQueryUpdate implements SpiProfileTransactionEvent {
+class CQueryUpdate implements SpiProfileTransactionEvent, CancelableQuery {
 
   private final CQueryPlan queryPlan;
 
@@ -82,14 +83,18 @@ class CQueryUpdate implements SpiProfileTransactionEvent {
       SpiTransaction t = getTransaction();
       profileOffset = t.profileOffset();
       Connection conn = t.getInternalConnection();
-      pstmt = conn.prepareStatement(sql);
+      synchronized (this) {
+        query.checkCancelled();
+        pstmt = conn.prepareStatement(sql);
 
-      if (query.getTimeout() > 0) {
-        pstmt.setQueryTimeout(query.getTimeout());
+        if (query.getTimeout() > 0) {
+          pstmt.setQueryTimeout(query.getTimeout());
+        }
+
+        bindLog = predicates.bind(pstmt, conn);
       }
-
-      bindLog = predicates.bind(pstmt, conn);
       rowCount = pstmt.executeUpdate();
+      query.checkCancelled();
 
       long executionTimeMicros = (System.nanoTime() - startNano) / 1000L;
       request.slowQueryCheck(executionTimeMicros, rowCount);
@@ -121,5 +126,12 @@ class CQueryUpdate implements SpiProfileTransactionEvent {
     getTransaction()
       .profileStream()
       .addQueryEvent(query.profileEventId(), profileOffset, desc.getProfileId(), rowCount, query.getProfileId());
+  }
+
+  @Override
+  public void cancel() {
+    synchronized (this) {
+      JdbcClose.cancel(pstmt);
+    }
   }
 }

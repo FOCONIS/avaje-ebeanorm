@@ -1,5 +1,6 @@
 package io.ebeaninternal.server.query;
 
+import io.ebean.CancelableQuery;
 import io.ebean.CountedValue;
 import io.ebean.util.JdbcClose;
 import io.ebeaninternal.api.SpiProfileTransactionEvent;
@@ -22,7 +23,7 @@ import java.util.Set;
 /**
  * Base compiled query request for single attribute queries.
  */
-class CQueryFetchSingleAttribute implements SpiProfileTransactionEvent {
+class CQueryFetchSingleAttribute implements SpiProfileTransactionEvent, CancelableQuery {
 
   private static final Logger logger = LoggerFactory.getLogger(CQueryFetchSingleAttribute.class);
 
@@ -148,21 +149,24 @@ class CQueryFetchSingleAttribute implements SpiProfileTransactionEvent {
   }
 
   private void prepareExecute() throws SQLException {
+    synchronized (this) {
+      query.checkCancelled();
+      SpiTransaction t = getTransaction();
+      profileOffset = t.profileOffset();
+      Connection conn = t.getInternalConnection();
+      pstmt = conn.prepareStatement(sql);
 
-    SpiTransaction t = getTransaction();
-    profileOffset = t.profileOffset();
-    Connection conn = t.getInternalConnection();
-    pstmt = conn.prepareStatement(sql);
+      if (query.getBufferFetchSizeHint() > 0) {
+        pstmt.setFetchSize(query.getBufferFetchSizeHint());
+      }
+      if (query.getTimeout() > 0) {
+        pstmt.setQueryTimeout(query.getTimeout());
+      }
 
-    if (query.getBufferFetchSizeHint() > 0) {
-      pstmt.setFetchSize(query.getBufferFetchSizeHint());
+      bindLog = predicates.bind(pstmt, conn);
     }
-    if (query.getTimeout() > 0) {
-      pstmt.setQueryTimeout(query.getTimeout());
-    }
-
-    bindLog = predicates.bind(pstmt, conn);
     dataReader = new RsetDataReader(request.getDataTimeZone(), pstmt.executeQuery());
+    query.checkCancelled();
   }
 
   /**
@@ -194,5 +198,12 @@ class CQueryFetchSingleAttribute implements SpiProfileTransactionEvent {
 
   Set<String> getDependentTables() {
     return queryPlan.getDependentTables();
+  }
+
+  @Override
+  public void cancel() {
+    synchronized (this) {
+      JdbcClose.cancel(pstmt);
+    }
   }
 }

@@ -1458,7 +1458,7 @@ public final class DefaultServer implements SpiServer, SpiEbeanServer {
   @Override
   public <T> FutureList<T> findFutureList(Query<T> query, Transaction t) {
 
-    SpiQuery<T> spiQuery = (SpiQuery<T>) query;
+    SpiQuery<T> spiQuery = (SpiQuery<T>) query.copy();
     spiQuery.setFutureFetch(true);
 
     // FutureList query always run in it's own persistence content

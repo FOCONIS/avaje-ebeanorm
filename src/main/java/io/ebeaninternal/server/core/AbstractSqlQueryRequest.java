@@ -1,6 +1,7 @@
 package io.ebeaninternal.server.core;
 
 import io.ebean.EbeanServer;
+import io.ebean.CancelableQuery;
 import io.ebean.Transaction;
 import io.ebean.util.JdbcClose;
 import io.ebeaninternal.api.BindParams;
@@ -21,7 +22,7 @@ import java.sql.SQLException;
 /**
  * Wraps the objects involved in executing a SQL / Relational Query.
  */
-public abstract class AbstractSqlQueryRequest {
+public abstract class AbstractSqlQueryRequest implements CancelableQuery {
 
   protected final SpiSqlBinding query;
 
@@ -48,6 +49,7 @@ public abstract class AbstractSqlQueryRequest {
     this.server = server;
     this.query = query;
     this.trans = (SpiTransaction) t;
+    this.query.setCancelableQuery(this);
   }
 
   /**
@@ -101,6 +103,7 @@ public abstract class AbstractSqlQueryRequest {
    * Return true if we can navigate to the next row.
    */
   public boolean next() throws SQLException {
+    query.checkCancelled();
     return resultSet.next();
   }
 
@@ -150,27 +153,30 @@ public abstract class AbstractSqlQueryRequest {
 
   protected void executeAsSql(Binder binder) throws SQLException {
 
-    prepareSql();
-    Connection conn = trans.getInternalConnection();
+    synchronized (this) {
+      query.checkCancelled();
+      prepareSql();
+      Connection conn = trans.getInternalConnection();
 
-    pstmt = conn.prepareStatement(sql);
-    if (query.getTimeout() > 0) {
-      pstmt.setQueryTimeout(query.getTimeout());
-    }
-    if (query.getBufferFetchSizeHint() > 0) {
-      pstmt.setFetchSize(query.getBufferFetchSizeHint());
-    }
+      pstmt = conn.prepareStatement(sql);
+      if (query.getTimeout() > 0) {
+        pstmt.setQueryTimeout(query.getTimeout());
+      }
+      if (query.getBufferFetchSizeHint() > 0) {
+        pstmt.setFetchSize(query.getBufferFetchSizeHint());
+      }
 
-    BindParams bindParams = query.getBindParams();
-    if (!bindParams.isEmpty()) {
-      this.bindLog = binder.bind(bindParams, pstmt, conn);
-    }
+      BindParams bindParams = query.getBindParams();
+      if (!bindParams.isEmpty()) {
+        this.bindLog = binder.bind(bindParams, pstmt, conn);
+      }
 
-    if (isLogSql()) {
-      trans.logSql(Str.add(TrimLogSql.trim(sql), "; --bind(", bindLog, ")"));
+      if (isLogSql()) {
+        trans.logSql(Str.add(TrimLogSql.trim(sql), "; --bind(", bindLog, ")"));
+      }
     }
-
     setResultSet(pstmt.executeQuery(), null);
+    query.checkCancelled();
   }
 
   /**
@@ -180,4 +186,10 @@ public abstract class AbstractSqlQueryRequest {
     return sql;
   }
 
+  @Override
+  public void cancel() {
+    synchronized (this) {
+      JdbcClose.cancel(pstmt);
+    }
+  }
 }

@@ -1,5 +1,6 @@
 package io.ebeaninternal.server.query;
 
+import io.ebean.CancelableQuery;
 import io.ebean.QueryIterator;
 import io.ebean.Version;
 import io.ebean.bean.BeanCollection;
@@ -157,8 +158,6 @@ public class CQuery<T> implements DbReadContext, CancelableQuery, SpiProfileTran
    */
   private PreparedStatement pstmt;
 
-  private boolean cancelled;
-
   private String bindLog;
 
   private final CQueryPlan queryPlan;
@@ -294,15 +293,7 @@ public class CQuery<T> implements DbReadContext, CancelableQuery, SpiProfileTran
   @Override
   public void cancel() {
     synchronized (this) {
-      this.cancelled = true;
-      if (pstmt != null) {
-        try {
-          pstmt.cancel();
-        } catch (SQLException e) {
-          String msg = "Error cancelling query";
-          throw new PersistenceException(msg, e);
-        }
-      }
+      JdbcClose.cancel(pstmt);
     }
   }
 
@@ -331,14 +322,9 @@ public class CQuery<T> implements DbReadContext, CancelableQuery, SpiProfileTran
   }
 
   ResultSet prepareResultSet(boolean forwardOnlyHint) throws SQLException {
-
     synchronized (this) {
-      if (cancelled || query.isCancelled()) {
-        // cancelled before we started
-        cancelled = true;
-        return null;
-      }
-
+      // cancelled before we started
+      query.checkCancelled();
       startNano = System.nanoTime();
 
       // prepare
@@ -373,9 +359,10 @@ public class CQuery<T> implements DbReadContext, CancelableQuery, SpiProfileTran
       DataBind dataBind = queryPlan.bindEncryptedProperties(pstmt, conn);
       bindLog = predicates.bind(dataBind);
 
-      // executeQuery
-      return pstmt.executeQuery();
     }
+    ResultSet ret = pstmt.executeQuery();
+    query.checkCancelled();
+    return ret;
   }
 
   /**
@@ -533,9 +520,9 @@ public class CQuery<T> implements DbReadContext, CancelableQuery, SpiProfileTran
   }
 
   boolean hasNext() throws SQLException {
-
     synchronized (this) {
-      if (noMoreRows || cancelled) {
+      query.checkCancelled();
+      if (noMoreRows) {
         return false;
       }
       if (hasNextCache) {

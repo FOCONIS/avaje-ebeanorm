@@ -1,5 +1,6 @@
 package io.ebeaninternal.server.query;
 
+import io.ebean.CancelableQuery;
 import io.ebean.util.JdbcClose;
 import io.ebeaninternal.api.SpiProfileTransactionEvent;
 import io.ebeaninternal.api.SpiQuery;
@@ -17,7 +18,7 @@ import java.util.Set;
 /**
  * Executes the select row count query.
  */
-class CQueryRowCount implements SpiProfileTransactionEvent {
+class CQueryRowCount implements SpiProfileTransactionEvent, CancelableQuery {
 
   private final CQueryPlan queryPlan;
 
@@ -110,14 +111,19 @@ class CQueryRowCount implements SpiProfileTransactionEvent {
       SpiTransaction t = getTransaction();
       profileOffset = t.profileOffset();
       Connection conn = t.getInternalConnection();
-      pstmt = conn.prepareStatement(sql);
+      synchronized (this) {
+        query.checkCancelled();
+        pstmt = conn.prepareStatement(sql);
 
-      if (query.getTimeout() > 0) {
-        pstmt.setQueryTimeout(query.getTimeout());
+        if (query.getTimeout() > 0) {
+          pstmt.setQueryTimeout(query.getTimeout());
+        }
+
+        bindLog = predicates.bind(pstmt, conn);
       }
-
-      bindLog = predicates.bind(pstmt, conn);
       rset = pstmt.executeQuery();
+      query.checkCancelled();
+
       if (!rset.next()) {
         throw new PersistenceException("Expecting 1 row but got none?");
       }
@@ -160,5 +166,12 @@ class CQueryRowCount implements SpiProfileTransactionEvent {
 
   Set<String> getDependentTables() {
     return queryPlan.getDependentTables();
+  }
+
+  @Override
+  public void cancel() {
+    synchronized (this) {
+      JdbcClose.cancel(pstmt);
+    }
   }
 }
